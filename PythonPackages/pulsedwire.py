@@ -35,18 +35,19 @@ def poly_minmax(signal, left_idx, right_idx, fcn):
 
 
 def get_amplitudes(signal, peaks):
-    '''Compute amplitudes at all extrema'''
+    '''Compute amplitudes at all extrema. The input 'peaks' refers to 
+    maximum extrema only. Minimum extrema are assumed to be 1/2 period away.'''
     period = np.diff(peaks).mean()
     halfperiod = round(period/2)
-    step = round(period/10)
+    window = round(period/10)
     
     # Find top peaks
-    top_peaks = np.array([poly_minmax(signal, peak-step, peak+step, max)
+    top_peaks = np.array([poly_minmax(signal, peak-window, peak+window, max)
                  for peak in peaks])
-    bot_peaks = np.array([poly_minmax(signal, peak-step, peak+step, min)
+    bot_peaks = np.array([poly_minmax(signal, peak-window, peak+window, min)
                  for peak in peaks[:-1]+halfperiod])
     
-    # Compute average pk2pk amplitude at each extrema
+    # Math to return peak to peak amplitude at every extrema.
     t = top_peaks.repeat(2)/2
     b = bot_peaks.repeat(2)/2
     amplitudes = t[1:-2] + t[2:-1] - b[:-1] - b[1:]

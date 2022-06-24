@@ -9,12 +9,11 @@ import pyvisa
 import numpy as np
 import pandas as pd
 from time import sleep
-import matplotlib.pyplot as plt
 import os
 
 
 def get_wfm_settings(scope):
-    # Return a pandas Series object containing waveform settings
+    ''' Return a pandas Series object containing waveform (wfm) settings '''
     values = np.array([
         scope.query_ascii_values('wfmoutpre:xinc?')[0],
         scope.query_ascii_values('wfmoutpre:xzero?')[0],
@@ -37,9 +36,10 @@ def setup_scope(scope_id):
     scope.write('data:stop 100000')
     return scope
 
-def request_measurement(scope, channel_map, trigger_check=0):
-    '''Reads all channels requested and saves in dict named data indexed by 
-    axis (x or y). If mean of first measurement matches prev_meas, return None. '''
+def check_measurement(scope, channel_map, trigger_check=0):
+    '''Reads all channels requested and returns in dataframe with columns named
+    by coordinate. If the mean of the first measurement matches trigger_check,
+    no trigger occured between readings and None is returned.'''
     
     data={}
     for channel,axis in channel_map.items():
@@ -59,11 +59,13 @@ def read_measurements(scope_id, max_meas=20, channel_map={'ch1':'x'}, rep_rate=1
     
     j = 0
     data_list = []
-    new_data = request_measurement(scope, channel_map)
-    trigger_check = new_data.values.sum(axis=0)[0]
+    new_data = check_measurement(scope, channel_map)
     data_list.append(new_data)
+    trigger_check = new_data.values.sum(axis=0)[0]
+    
     while j+1<max_meas:
-        new_data = request_measurement(scope, channel_map, trigger_check=trigger_check)
+        sleep(1/rep_rate)
+        new_data = check_measurement(scope, channel_map, trigger_check=trigger_check)
         if new_data is not None:
             print(f'Measurement {j+1}')
             data_list.append(new_data)
@@ -71,54 +73,25 @@ def read_measurements(scope_id, max_meas=20, channel_map={'ch1':'x'}, rep_rate=1
             j+=1
         else:
             print('Read same data')
-        sleep(1/rep_rate)
-    
+        
     # Average Measurements
     df = pd.DataFrame(np.array(data_list).sum(axis=0)/max_meas,
-                      columns=channel_map.values()
-                      )
+                      columns=channel_map.values())
     
-    # Scale values
+    # Scale uint8 data with waveform settings
+    wfm = get_wfm_settings(scope)
     for channel, axis in channel_map.items():
-        wfm = get_wfm_settings(scope)
         df[axis] = wfm.yzero + wfm.ymult*df[axis]
     df['time'] = wfm.xzero + wfm.xinc*np.arange(wfm.points)
+    
+    # Save to file
     if filename is not None:
         if os.path.exists(filename):
-            print(f'File already exists!!!')
+            print('File already exists!!!')
         else:
             df.to_csv(filename, index=False)
             print(f'Data saved to {filename}.')
+    else:
+        print('File not saved.')
     return df
 
-def remove_noisy_shots(dirty_df, thresh_fac=3, noise_quantile=.9, plot=False):
-    # Subtract average trajectory and slow variations
-    dirty_df.set_index('time', inplace=True)
-    dirty_average = dirty_df.mean(axis=1)
-    deviation_from_average = dirty_df.apply(lambda x: x-dirty_average)
-    
-    def remove_slow_variation(series):
-        vec = np.arange(len(series))
-        poly = np.polyfit(vec, series, 3)
-        return series - np.polyval(poly, vec)
-    
-    noise = deviation_from_average.apply(remove_slow_variation)
-    noise_thresh = thresh_fac*np.quantile(np.abs(noise.values.ravel()),
-                                          noise_quantile)
-    
-    bad_columns = noise.columns[(noise>noise_thresh).any()]
-    print(f'Dropped {len(bad_columns)} noisy measurements out of {len(noise.columns)} total.')
-    clean_df = dirty_df.drop(columns = bad_columns)
-    clean_df['volts'] = clean_df.mean(axis=1)
-    
-    if plot:
-        fig, ax = plt.subplots()
-        [ax.plot(noise.index, noise[str(j)]) for j in np.arange(20)]
-        
-        fig, ax = plt.subplots()
-        ax.plot(dirty_df.index, dirty_average)
-        ax.plot(clean_df.index, clean_df.volts)
-        
-        
-    clean_df.reset_index(inplace=True)
-    return clean_df
