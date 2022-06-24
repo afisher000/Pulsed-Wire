@@ -14,13 +14,29 @@ import datetime
 
 plt.close('all')
 
-### INPUTS ###
-data_folder = '2022-06-01 (ytraj, xoffset) Andrew'
 
-#data_folder = '2022-05-12 (ytraj, yoffset) Andrew'
-#data_folder = '2022-05-10 (xtraj, yoffset) Andrew'
-#data_folder = '2022-05-12 (ytraj, xoffset) Andrew'
-#data_folder = '2022-05-10 (xtraj, xoffset) Jason 2'
+# Post positions (moved June 1)
+#P1x = 5.80, P1y = 12.75
+#P2x = 5.50, P2y = 10.25
+
+# Adjustments:
+# dP1x = 1.700, dP1y = -1.000
+# dP2x = 0.070, dP2y = 0.700
+
+
+# Post positions (moved June 2)
+#P1x = 7.50, P1y = 11.75
+#P2x = 5.57, P2y = 10.95
+
+### INPUTS ###
+#data_folder = '2022-06-01 (ytraj, xoffset)'
+#data_folder = '2022-06-01 (xtraj, yoffset)'
+#data_folder = '2022-06-02 (ytraj, xoffset)'
+#data_folder = '2022-06-02 (xtraj, yoffset)'
+#data_folder = '2022-06-02 (ytraj, xoffset) (2)'
+data_folder = '2022-06-02 (xtraj, yoffset) (2)'
+
+
 GBL = pwf.parse_global_constants(data_folder)
 
 # For data before May
@@ -33,7 +49,7 @@ xbins = pd.Series({
     'ref2':11e-4,
     'ref2_end':15e-4,
     'pks':17e-4,
-    'pks_end':33e-4,
+    'pks_end':32e-4,
     'post':np.inf
     })
 
@@ -49,10 +65,19 @@ ybins = pd.Series({
     })
 
 
-# Map for data starting May 2 (reading data to laptop directly)
+# Map for data starting May 2 (reading scope data to laptop directly)
 channel_map = {'time':'time', 'x':'x', 'y':'y'}
 
-
+xbins = pd.Series({
+    'pre':-np.inf,
+    'ref1':9e-4,
+    'ref1_end':13e-4,
+    'ref2':21e-4,
+    'ref2_end':25e-4,
+    'pks':27e-4,
+    'pks_end':43e-4,
+    'post':np.inf
+    })
 
 ybins = pd.Series({
     'pre':-np.inf,
@@ -60,8 +85,8 @@ ybins = pd.Series({
     'ref1_end':3e-4,
     'ref2':11e-4,
     'ref2_end':13e-4,
-    'pks':15e-4,
-    'pks_end':32e-4,
+    'pks':16e-4,
+    'pks_end':32.5e-4,
     'post':np.inf
     })
 
@@ -88,11 +113,12 @@ for file in os.listdir(data_folder):
     
     
     ax_all.plot(df.time,df.volts-df.volts[0])
-    if file=='(0,0).1.csv':
+    if file=='(1500,0).1.csv':
         ax_ref.plot(df.time, df.volts-df.volts[0])
+        pwf.annotated_plot(df, bins, title=file)
     
     series = pwf.get_amplitudes_as_series(df, bins, noise_fac=2)
-    #pwf.annotated_plot(df, bins, title=file)
+    
     if series is not None:
         series['offset'] = pwf.get_offset_from_filename(data_folder, file)
         pieces.append(series)
@@ -117,6 +143,13 @@ pwf.plot_axis_along_undulator(GBL, qfit_axes, save=False)
 pwf.plot_concavity(df, GBL, qfit_axes, pk_idxs=range(0,6))
 pwf.plot_concavity(df, GBL, qfit_axes, pk_idxs=range(-6,0))
 
+
+# Get Post adjustments
+pk_offsets = qfit_axes[:12]
+pk_idx = np.arange(len(pk_offsets))
+p1_to_und = 1
+und_to_p2 = .14
+pwf.get_post_adjustments(pk_idx, pk_offsets, p1_to_und, und_to_p2)
 
 
 # Read dataframes, munge so columns are ['time','volts']

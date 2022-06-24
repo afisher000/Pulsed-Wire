@@ -12,13 +12,13 @@ import scope_functions as sf
 import os
 import matplotlib.pyplot as plt
 
-data_folder = '22-06-01 ytraj vs xoffset Andrew'
-file = '(0,0).3.csv'
+data_folder = '2022-06-02 (xtraj, yoffset) (2)'
+file = '(0,-1000).2.csv'
 
 # Take scope measurement
 params = {
     'max_meas':30,
-    'channel_map':{'ch2':'y'},
+    'channel_map':{'ch2':'x'},
     'rep_rate':1.4,
     'filename':os.path.join(data_folder, file)
     }

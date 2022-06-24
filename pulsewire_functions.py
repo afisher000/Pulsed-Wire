@@ -13,6 +13,32 @@ from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
 from sklearn.linear_model import LinearRegression
 
+def get_post_adjustments(pk_idx, pk_offsets, p1_to_und, und_to_p2):
+    
+    # P1 is on entrance side of undulator
+    p1_pos = 0
+    und_len = .35 # includes support
+    p2_pos = p1_to_und + und_len + und_to_p2
+    pk_pos = p1_to_und + .063 + .016*pk_idx
+    
+    # Compute adjustments from linear fit
+    line_fit = np.polyfit(pk_pos, pk_offsets, 1)
+    p1_adj = np.polyval(line_fit, p1_pos)
+    p2_adj = np.polyval(line_fit, p2_pos)
+    print(f'P1 adjustment: {p1_adj}')
+    print(f'P2 adjustment: {p2_adj}')
+    
+    # Position vectors for plotting
+    pvec = np.linspace(p1_pos, p2_pos, 100)
+    und_vec = np.linspace(p1_to_und, p1_to_und+und_len, 100)
+
+    # Plot
+    fig, ax = plt.subplots()
+    ax.scatter(pk_pos, pk_offsets, s=10)
+    ax.plot(pvec, np.polyval(line_fit, pvec))
+    ax.plot(und_vec, np.polyval(line_fit, und_vec), c='k')
+    ax.scatter([p1_pos, p2_pos], [p1_adj, p2_adj])
+    return
 
 def get_amplitudes_as_series(df, bins, num_peaks=19, noise_fac=2):
     '''Compute amplitudes of signal region and return as a pandas Series object.'''
