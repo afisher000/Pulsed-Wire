@@ -5,10 +5,12 @@ Created on Sat May 21 11:39:45 2022
 @author: afish
 """
 
-
+import sys
+sys.path.append('C:\\Users\\afisher\\Documents\\GitHub\\Pulsed-Wire\\PythonPackages')
+import scope 
+import pulsedwire as pwf
 import numpy as np
 import pandas as pd
-import scope_functions as sf
 import os
 import matplotlib.pyplot as plt
 
@@ -23,9 +25,8 @@ params = {
     'filename':os.path.join(data_folder, file)
     }
 scope_id = 'USB0::0x699::0x408::C031986::INSTR'
-df = sf.read_measurements(scope_id, **params)
-fig, ax = plt.subplots()
-ax.plot(df.time, df.y-df.y[0])
+df = scope.read_measurements(scope_id, **params)
+
 
 
 
