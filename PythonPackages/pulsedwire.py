@@ -6,12 +6,11 @@ Created on Sat May 21 17:51:47 2022
 """
 import matplotlib.pyplot as plt
 import numpy as np
-import re
 import os
 import pandas as pd
 from scipy.signal import find_peaks, savgol_filter
 from scipy.interpolate import interp1d
-from sklearn.linear_model import LinearRegression
+
 
 
 def get_measurement_amplitudes(measurement, annotate_plot=False, ref_magnet=True):
@@ -29,7 +28,7 @@ def get_measurement_amplitudes(measurement, annotate_plot=False, ref_magnet=True
         
     # Use derivate (datap) identify reference magnet and undulator signal
     pktimes, period = get_measurement_pktimes_from_derivative(meas.time, meas.datap)
-
+    
     if annotate_plot:
         _, annotate = plt.subplots()
         annotate.plot(meas.time, meas.data, c='k')

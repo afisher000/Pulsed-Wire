@@ -24,51 +24,75 @@ from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
 plt.close('all')
 
+'''
+##### WARNING #####
+This code is unreliable until the non-symetric travelling waves on the string
+can be understood.
+'''
 
-df = pd.read_csv('final_trajectory.csv')
+# Inputs
+file = 'final_trajectory_shortened.csv'
+current = 3.2
 
-# Read in earth signal
-path = ('C:\\Users\\afisher\\Documents\\Magnet Tuning\\Summer 2022 FASTGREENS\\'
-        'April 2022 Pulse Wire\\Pulsewire Measurement Archive')
-earth = pd.read_csv(os.path.join(path, 
-                                 '2022-06-01 No Prebuncher',
-                                 'signal.csv'))
 
-# Previous measurements
-A_ref = 796 #mV
-C_ref = 123.7 #mV/um
-V_ref = 10
+# Initialize series
+# Units: [calibrations]=mV/um, [pulse current]=A, [amplitudes]=mV
+calx, caly, cur, ampx, ampy = [pd.Series(dtype = 'float64') for _ in range (5)]
+cur['earth'] = 3.2 * (3/10) #Not known for sure
+cur['ref'] = 3.2 #Confirmed
+cur['meas'] = current
 
-C_earth_x = 99/2 #mV/um
-C_earth_y = 56/10 #mV/um
-V_earth = 10
+
+# Read in calibrations
+earth_cal = pd.read_csv(os.path.join('Earth Calibration', 'calibration_data.csv'))
+ref_cal = pd.read_csv(os.path.join('Signal Calibration', 'calibration_data.csv'))
+
+calx['earth'] = np.polyfit(earth_cal.dist, earth_cal.xvolts, 1)[0]*1000
+caly['earth'] = np.polyfit(earth_cal.dist, earth_cal.yvolts, 1)[0]*1000
+calx['ref'] = np.polyfit(ref_cal.dist, ref_cal.xvolts, 1)[0]*1000
+caly['ref'] = np.polyfit(ref_cal.dist, ref_cal.yvolts, 1)[0]*1000
+calx = calx.abs() # Calibrations should be positive
+caly = caly.abs()
+
+
+# Read in mean amplitudes
+ref_signal = pd.read_csv(os.path.join('Signal Calibration', 'calibration_signal.csv'))
+xref = ref_signal[['time','x']].rename(columns={'x':'data'})
+yref = ref_signal[['time','y']].rename(columns={'y':'data'})
+ampx['ref'] = pwf.get_measurement_amplitudes(xref, ref_magnet=False).mean()*1000
+ampy['ref'] = pwf.get_measurement_amplitudes(yref, ref_magnet=False).mean()*1000
+
 
 # Find mean amplitudes of measured signal
-xdf = df[['time','x']].rename(columns={'x':'data'})
-ydf = df[['time','y']].rename(columns={'y':'data'})
-A_meas_x = pwf.get_measurement_amplitudes(xdf, ref_magnet=False).mean()/2*1000
-A_meas_y = pwf.get_measurement_amplitudes(ydf, ref_magnet=False).mean()/2*1000
-
-# Find correction from earth signal
-fx = interp1d(earth.time, savgol_filter(earth.x, 151, 3))
-fy = interp1d(earth.time, savgol_filter(earth.y, 151, 3))
-
-V_meas = 10
-x_earth = fx(df.time) - fx(df.time[0])
-y_earth = fy(df.time) - fy(df.time[0])
-
-dx = x_earth * (V_ref*C_ref)/(V_earth*C_earth_x) * (A_meas_x/A_ref)
-dy = y_earth * (V_ref*C_ref)/(V_earth*C_earth_y) * (A_meas_y/A_ref)
+meas_signal = pd.read_csv(file)
+xmeas = meas_signal[['time','x']].rename(columns={'x':'data'})
+ymeas = meas_signal[['time','y']].rename(columns={'y':'data'})
+ampx['meas'] = pwf.get_measurement_amplitudes(xmeas, ref_magnet=False).mean()*1000
+ampy['meas'] = pwf.get_measurement_amplitudes(ymeas, ref_magnet=False).mean()*1000
 
 
-df['x_correct'] = df.x - dx
-df['y_correct'] = df.y - dy
+# Compute correction from earth signal
+earth_signal = pd.read_csv(os.path.join('Earth Calibration', 'calibration_signal.csv'))
+earth_signal.x = earth_signal.x - earth_signal.x.iloc[0]
+earth_signal.y = earth_signal.y - earth_signal.y.iloc[0]
+earth_xinterp = interp1d(earth_signal.time, savgol_filter(earth_signal.x, 151, 3))
+earth_yinterp = interp1d(earth_signal.time, savgol_filter(earth_signal.y, 151, 3))
+
+# Check these equations again...
+x_correction = earth_xinterp(meas_signal.time) / (cur.earth*calx.earth) * (cur.ref*calx.ref) * (ampx.meas/ampx.ref)
+y_correction = earth_yinterp(meas_signal.time) / (cur.earth*caly.earth) * (cur.ref*caly.ref) * (ampy.meas/ampy.ref)
 
 
-ax = df.plot(x='time', y=['x','x_correct'])
-ax.plot(df.time, np.ones_like(df.time)*df.x[0], c='k')
-ax = df.plot(x='time', y=['y', 'y_correct'])
-ax.plot(df.time, np.ones_like(df.time)*df.y[0], c='k')
+# Apply correction
+meas_signal['x_correct'] = meas_signal.x - x_correction
+meas_signal['y_correct'] = meas_signal.y - y_correction
+
+
+# Plot
+ax = meas_signal.plot(x='time', y=['x','x_correct'])
+#ax.plot(df.time, np.ones_like(df.time)*df.x[0], c='k')
+ax = meas_signal.plot(x='time', y=['y', 'y_correct'])
+#ax.plot(df.time, np.ones_like(df.time)*df.y[0], c='k')
 
 
 
