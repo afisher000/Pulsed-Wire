@@ -14,13 +14,13 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-folder = 'Elliptical Displacement Troubleshooting'
-file = '17in closer'
+folder = 'Amplitude Repeatability' 
+file = 'shot4'
 
 # Take scope measurement
 params = {
     'max_meas':30,
-    'channel_map':{'ch1':'x'},
+    'channel_map':{'ch1':'x', 'ch2':'y'},
     'rep_rate':1.4,
     'filename':os.path.join(folder, file)
     }
