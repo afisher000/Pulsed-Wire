@@ -34,11 +34,12 @@ earth = pd.read_csv(os.path.join(path,
                                  '2022-06-01 No Prebuncher',
                                  'signal.csv'))
 
-# Previous measurements
+# Measurement calibration and voltage
 A_ref = 796 #mV
 C_ref = 123.7 #mV/um
 V_ref = 10
 
+# Earth calibrations and voltage
 C_earth_x = 99/2 #mV/um
 C_earth_y = 56/10 #mV/um
 V_earth = 10
