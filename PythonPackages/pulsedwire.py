@@ -11,7 +11,28 @@ import pandas as pd
 from scipy.signal import find_peaks, savgol_filter
 from scipy.interpolate import interp1d
 
-
+def get_linear_calibration(file, plot=False):
+    ''' Returns the linear calibration computed from datapoints in a file.
+    The file must have the displacement column labeled 'dist'. '''
+    
+    data = pd.read_csv(file)
+    assert('dist' in data.columns)
+    
+    cals = []
+    for column in data.columns.drop('dist'):
+        fit = np.polyfit(data.dist, data[column], 1)
+        cal = np.abs(fit[0]*1000)
+        cals.append(cal)
+        
+        if plot:
+            ax = data.plot(x='dist', y=column, kind='scatter')
+            ax.plot(data.dist, np.polyval(fit, data.dist), 
+                    label=f'Fit: {cal:.1f} mV/um')
+            ax.set_xlabel('Displacement (um)')
+            ax.set_ylabel(column)
+            ax.legend()
+    
+    return cals
 
 def get_measurement_amplitudes(measurement, annotate_plot=False, ref_magnet=True):
     ''' Computes the relative amplitudes of the measurement.'''

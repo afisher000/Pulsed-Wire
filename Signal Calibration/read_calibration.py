@@ -16,23 +16,7 @@ plt.close('all')
 # Voltage was set to 10 (black button, x1), but current was measured at 3.2 volts?
 
 # Get calibration fits
-cal_data = pd.read_csv('calibration_data.csv')
-x_fit = np.polyfit(cal_data.dist, cal_data.xvolts, 1)
-y_fit = np.polyfit(cal_data.dist, cal_data.yvolts, 1)
-x_cal = x_fit[0]*1000 #mV/um
-y_cal = y_fit[0]*1000 #mV/um
-
-# Plot calibration fits
-fig, axes = plt.subplots(nrows=2, ncols=1, sharex=True)
-axes[0].scatter(cal_data.dist, cal_data.xvolts, label='Meas')
-axes[0].plot(cal_data.dist, np.polyval(x_fit, cal_data.dist), label=f'Fit: {x_cal:.1f} mV/um')
-axes[1].scatter(cal_data.dist, cal_data.yvolts, label='Meas')
-axes[1].plot(cal_data.dist, np.polyval(y_fit, cal_data.dist), label=f'Fit: {y_cal:.1f} mV/um')
-axes[1].set_xlabel('Displacement (um)')
-axes[0].set_ylabel('XVolts')
-axes[1].set_ylabel('YVolts')
-axes[0].legend()
-axes[1].legend()
+x_cal, y_cal = pwf.get_linear_calibration('calibration_data.csv')
 
 # Get peak to peak amplitudes
 meas = pd.read_csv('calibration_signal.csv')
