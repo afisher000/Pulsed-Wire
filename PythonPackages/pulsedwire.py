@@ -11,7 +11,7 @@ import pandas as pd
 from scipy.signal import find_peaks, savgol_filter
 from scipy.interpolate import interp1d
 
-def get_linear_calibration(file, plot=False):
+def get_linear_calibration(file, plot=False, ax=None):
     ''' Returns the linear calibration computed from datapoints in a file.
     The file must have the displacement column labeled 'dist'. '''
     
@@ -88,7 +88,9 @@ def get_measurement_pktimes_from_derivative(time, datap):
     max_width = len(time)/10
     peaks, _ = find_peaks(datap, prominence=datap.max(), width=(0,max_width))
     pktimes = time[peaks].values
+    
     period = np.diff(pktimes).mean()
+    # If period variation is large, incorrect peaks were found...
     if len(peaks)==10:
         peaks = peaks[1:]
     
