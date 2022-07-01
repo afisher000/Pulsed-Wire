@@ -6,7 +6,7 @@ Created on Sat May 21 11:39:45 2022
 """
 
 import sys
-sys.path.append('C:\\Users\\afisher\\Documents\\GitHub\\Pulsed-Wire\\PythonPackages')
+sys.path.append('C:\\Users\\afish\\Documents\\GitHub\\Pulsed-Wire\\PythonPackages')
 import scope 
 import pulsedwire as pwf
 import numpy as np
@@ -14,13 +14,14 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-folder = 'Amplitude Repeatability' 
-file = 'shot4'
+folder = 'Collimated Lasers'
+file = '0um_signal.csv'
+# , 'ch2':'y'
 
 # Take scope measurement
 params = {
-    'max_meas':30,
-    'channel_map':{'ch1':'x', 'ch2':'y'},
+    'max_meas':10,
+    'channel_map':{'ch1':'x'},
     'rep_rate':1.4,
     'filename':os.path.join(folder, file)
     }
