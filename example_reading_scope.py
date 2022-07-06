@@ -14,13 +14,13 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-folder = 'Collimated Lasers'
-file = '0um_signal.csv'
+folder = 'Xsignal Scan'
+file = '0um signal.csv'
 # , 'ch2':'y'
 
 # Take scope measurement
 params = {
-    'max_meas':10,
+    'max_meas':20,
     'channel_map':{'ch1':'x'},
     'rep_rate':1.4,
     'filename':os.path.join(folder, file)
