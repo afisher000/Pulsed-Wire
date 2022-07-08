@@ -14,16 +14,16 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-folder = 'Xsignal Scan'
-file = '0um signal.csv'
+folder = ''
+file = '(0,0).3.csv'
 # , 'ch2':'y'
 
 # Take scope measurement
 params = {
-    'max_meas':20,
+    'max_meas':30,
     'channel_map':{'ch1':'x'},
     'rep_rate':1.4,
-    'filename':os.path.join(folder, file)
+    'filename':file
     }
 scope_id = 'USB0::0x699::0x408::C031986::INSTR'
 df = scope.read_measurements(scope_id, **params)
