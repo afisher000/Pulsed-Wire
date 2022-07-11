@@ -14,8 +14,8 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-folder = 'July 11 Calibration'
-file = '(750,0).1.csv'
+folder = '2022-07-11 (xtraj, yoffset)'
+file = '(0,750).1.csv'
 
 # Take scope measurement
 params = {
