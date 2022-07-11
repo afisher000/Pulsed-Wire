@@ -14,13 +14,13 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-folder = '2022-07-11 (xtraj, yoffset)'
-file = '(0,750).1.csv'
+folder = '2022-07-11 (ytraj, xoffset)'
+file = '(750,0).1.csv'
 
 # Take scope measurement
 params = {
     'max_meas':30,
-    'channel_map':{'ch1':'x'},
+    'channel_map':{'ch2':'y'},
     'rep_rate':1.4,
     'filename':os.path.join(folder, file)
     }
