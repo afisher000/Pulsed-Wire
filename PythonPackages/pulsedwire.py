@@ -11,6 +11,36 @@ import pandas as pd
 from scipy.signal import find_peaks, savgol_filter
 from scipy.interpolate import interp1d
 
+def analyze_laserscan(laserscan, datacolumn, title=''):
+    results = pd.DataFrame(columns=['zero','amp','amp_std'])
+    for dist in laserscan.index.unique():
+        data = laserscan.loc[dist].rename(columns = {datacolumn:'data'})
+        amps = get_measurement_amplitudes(data, ref_magnet=False)*1000 #mV
+        zero = data.data.iloc[0]*1000 #mV
+        results.loc[dist] = [zero, amps.mean(), amps.std()]
+        
+    ax_calibration = results.reset_index().plot(x='index', y='zero', kind='scatter',
+                               xlabel = 'Displacement (um)',
+                               ylabel = 'Signal zero (mV)',
+                               title = title)
+    
+    ax_amp = results.reset_index().plot(x='index', y='amp', kind='scatter',
+                               xlabel = 'Displacement (um)',
+                               ylabel = 'Mean Signal Amplitude (mV)',
+                               title = title)
+    
+    # Apply linear fit
+    fit_data = results[results.amp>results.amp.max()*.8]
+    linefit = np.polyfit(fit_data.index, fit_data.zero,1)
+    calibration = abs(linefit[0])
+    ax_calibration.plot(fit_data.index, np.polyval(linefit, fit_data.index),
+                        label=f'Calibration={calibration:.1f} mV/um')
+    ax_calibration.legend()
+    
+    # Compute deflection
+    deflection = results.amp.max()/calibration/2
+    return deflection
+
 def get_linear_calibration(file, plot=False, ax=None):
     ''' Returns the linear calibration computed from datapoints in a file.
     The file must have the displacement column labeled 'dist'. '''
@@ -34,7 +64,7 @@ def get_linear_calibration(file, plot=False, ax=None):
     
     return cals
 
-def get_measurement_amplitudes(measurement, annotate_plot=False, ref_magnet=True):
+def get_measurement_amplitudes(measurement, annotate_plot=False, ref_magnet=True, return_means=False):
     ''' Computes the relative amplitudes of the measurement.'''
     
     # Add savgol_filter smoothing for downsampling
@@ -60,6 +90,7 @@ def get_measurement_amplitudes(measurement, annotate_plot=False, ref_magnet=True
         annotate=None
     
     # Get reference amplitude
+    ref_amp = 1
     if ref_magnet:
         ref = meas[meas.time<pktimes[0]-period]
         ref_amp = get_measurement_ref_amplitude(ref, window=period/2, annotate=annotate)
@@ -76,10 +107,11 @@ def get_measurement_amplitudes(measurement, annotate_plot=False, ref_magnet=True
     meas_error = 3e-5*delta**4 + 1.27e-2*delta**2 #correction fit to relative error
     amplitudes = amplitudes*(1-meas_error)
     
-    if ref_magnet:
-        return amplitudes/ref_amp
+    if return_means:
+        return amplitudes/ref_amp, means[1:-1]
     else:
-        return amplitudes
+        return amplitudes/ref_amp
+
 
 def get_measurement_pktimes_from_derivative(time, datap):
     ''' Compute peaks and pktimes of measurement derivative. Return estimate
@@ -166,7 +198,6 @@ def fit_concavity(offsets, amplitudes):
 
 def plot_concavity(scan_amps, wire_position, idxs=range(3), plot_theory=True):
     ''' Plot the concavities of specified peaks, along with theory optionally.'''
-    
     traj_label, offset_label = scan_amps.name.title().split(', ')
     
     fig, ax = plt.subplots()

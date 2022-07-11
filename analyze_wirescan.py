@@ -17,12 +17,12 @@ import os
 
 
 ''' INPUTS '''
-path = 'C:\\Users\\afisher\\Documents\\Magnet Tuning\\Summer 2022 FASTGREENS\\April 2022 Pulse Wire\\Centering Wire'
-#file = '2022-05-12 (ytraj, xoffset) Andrew.csv'
-files = '2022-06-01 (ytraj, xoffset) Andrew.csv'
+# path = 'C:\\Users\\afisher\\Documents\\Magnet Tuning\\Summer 2022 FASTGREENS\\April 2022 Pulse Wire\\Centering Wire'
+# file = '2022-05-12 (ytraj, xoffset) Andrew.csv'
+# files = '2022-06-01 (ytraj, xoffset) Andrew.csv'
 
-#path = ''
-#file = '2022-06-02 (xtraj, yoffset).csv'
+path = ''
+files = '2022-07-08 (xtraj, xoffset).csv'
 
 # Loop over all files
 #files = []
@@ -50,7 +50,7 @@ for file in files:
     arr = []
     for index in wirescan.index.unique():
         measurement = wirescan.loc[index]
-        amplitudes = pwf.get_measurement_amplitudes(measurement, annotate_plot=False)
+        amplitudes = pwf.get_measurement_amplitudes(measurement, ref_magnet=False, annotate_plot=False)
         arr.append(amplitudes)    
     scan_amps = pd.DataFrame(arr, index=wirescan.index.unique()).add_prefix('peak')
     
