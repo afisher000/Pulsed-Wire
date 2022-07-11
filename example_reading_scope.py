@@ -14,16 +14,15 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-folder = ''
-file = '(0,0).3.csv'
-# , 'ch2':'y'
+folder = 'July 11 Calibration'
+file = '(750,0).1.csv'
 
 # Take scope measurement
 params = {
     'max_meas':30,
     'channel_map':{'ch1':'x'},
     'rep_rate':1.4,
-    'filename':file
+    'filename':os.path.join(folder, file)
     }
 scope_id = 'USB0::0x699::0x408::C031986::INSTR'
 df = scope.read_measurements(scope_id, **params)
