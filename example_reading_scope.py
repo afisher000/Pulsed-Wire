@@ -15,7 +15,7 @@ import os
 import matplotlib.pyplot as plt
 
 folder = '2022-07-11 (ytraj, xoffset)'
-file = '(750,0).1.csv'
+file = '(-1000,0).1.csv'
 
 # Take scope measurement
 params = {
