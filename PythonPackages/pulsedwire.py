@@ -11,6 +11,62 @@ import pandas as pd
 from scipy.signal import find_peaks, savgol_filter
 from scipy.interpolate import interp1d
 
+def analyze_wirescan(file, path='', plot=True):
+    print(f'Reading {file}')
+    # Parse trajectory and offset direction
+    traj = file[file.find('traj')-1]
+    offset = file[file.find('offset')-1] + 'offset'
+    
+    # Munge wirescan dataframe
+    wirescan = pd.read_csv(os.path.join(path,file))
+    wirescan = wirescan.set_index([offset, 'iteration']).sort_index(level=[0,1])
+    wirescan.rename(columns={traj:'data'}, inplace=True)
+    
+    # Create data DataFrame:
+        # Columns = amplitudes, means, offsets
+        # Index = Peak number (repeats for each offset)
+    data = pd.DataFrame(columns=['amps','means','offset'])
+    for meas_offset in wirescan.index.get_level_values(level=0).unique():
+        meas = wirescan.loc[meas_offset].copy()
+        meas.rename(columns = {traj:'data'}, inplace=True)
+        amplitudes, means = get_measurement_amplitudes(meas,
+                                                           annotate_plot=True,
+                                                           ref_magnet=False,
+                                                           return_means=True)
+        temp_df = pd.DataFrame(np.array([amplitudes, 
+                                         means, 
+                                         meas_offset*np.ones_like(means)
+                                         ]).T, 
+                               columns=['amps','means','offset'])
+        data = pd.concat([data, temp_df])
+        
+    
+    # Create peak_data DataFrame:
+        # Columns = axis, extrema (of quadratic fits)
+        # Index = Peak number (no repeating)
+    peak_data = pd.DataFrame(columns=['axis','extrema'])
+    for peak in data.index.unique():
+        peak_data.loc[peak] = fit_concavity(data.loc[peak].offset, data.loc[peak].amps)
+    peak_data = peak_data.reset_index().rename(columns={'index':'peak'})
+    
+    
+    
+    if plot:
+        # FIGURES 
+        cmap = plt.get_cmap('coolwarm')
+        
+        # Plot amplitudes vs means
+        data.plot.scatter(x='means', y='amps', c='offset', cmap=cmap) 
+        
+        # Plot amplitudes vs concavity
+        data.plot.scatter(x='offset', y='amps', c = data.index, cmap=cmap)
+        
+        # Plot wire alignment
+        peak_data.plot.scatter(x='peak', y='axis')
+
+    return data, peak_data
+
+
 def analyze_laserscan(laserscan, datacolumn, title=''):
     results = pd.DataFrame(columns=['zero','amp','amp_std'])
     for dist in laserscan.index.unique():
@@ -232,10 +288,10 @@ def plot_concavity(scan_amps, wire_position, idxs=range(3), plot_theory=True):
 
 
 def merge_wirescan_files(folder, path='', channels={}, skiprows=0):
-    ''' Combine wirescan files from a given folder into a single csv file
-    saved with the folder name. Specify a dictionary 'channels' to rename
-    the dataframe columns to ['time','x','y'] as appropriate. Use skiprows to 
-    remove scope csv headers.'''
+    ''' Combine wirescan files from a given folder (format: %Y-%m-%d (?trax, ?offset) )
+    into a single csv file saved with the folder name. Specify a dictionary 
+    'channels' to rename the dataframe columns to ['time','x','y'] as
+    appropriate. Use skiprows to remove scope csv headers.'''
     
     '''EXAMPLE CODE FOR THUMBDRIVE DATA:
     channels = {'TIME':'time', 'CH1':'x', 'CH4':'y'}
