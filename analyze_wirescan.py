@@ -6,7 +6,7 @@ Created on Sun Jun 26 16:50:51 2022
 """
 
 import sys
-sys.path.append('C:\\Users\\afisher\\Documents\\GitHub\\Pulsed-Wire\\PythonPackages')
+sys.path.append('C:\\Users\\afish\\Documents\\GitHub\\Pulsed-Wire\\PythonPackages')
 import pulsedwire as pwf
 import pandas as pd
 import numpy as np
@@ -14,39 +14,42 @@ import matplotlib.pyplot as plt
 import os
 plt.close('all')
 
+pwf.analyze_wirescan('2022-07-12 (ytraj, yoffset).csv')
 
 
 
 # path = 'C:\\Users\\afisher\\Documents\\Magnet Tuning\\Summer 2022 FASTGREENS\\April 2022 Pulse Wire\\Centering Wire'
-path = ''
-xyfile = '2022-07-11 (xtraj, yoffset).csv'
-yyfile = '2022-07-11 (ytraj, yoffset).csv'
-xxfile = '2022-07-11 (xtraj, xoffset).csv'
-yxfile = '2022-07-11 (ytraj, xoffset).csv'
+# =============================================================================
+# path = ''
+# xyfile = '2022-07-12 (xtraj, yoffset).csv'
+# yyfile = '2022-07-11 (ytraj, yoffset).csv'
+# xxfile = '2022-07-12 (xtraj, xoffset).csv'
+# yxfile = '2022-07-12 (ytraj, xoffset).csv'
+# 
+# xydata, xypeak_data = pwf.analyze_wirescan(xyfile, plot=False)
+# yydata, yypeak_data = pwf.analyze_wirescan(yyfile, plot=False)
+# xxdata, xxpeak_data = pwf.analyze_wirescan(xxfile, plot=False)
+# yxdata, yxpeak_data = pwf.analyze_wirescan(yxfile, plot=False)
+# =============================================================================
 
-xydata, xypeak_data = pwf.analyze_wirescan(xyfile, plot=False)
-yydata, yypeak_data = pwf.analyze_wirescan(yyfile, plot=False)
-xxdata, xxpeak_data = pwf.analyze_wirescan(xxfile, plot=False)
-yxdata, yxpeak_data = pwf.analyze_wirescan(yxfile, plot=False)
-
-
-# Plot concavity plots
-fig, ax = plt.subplots()
-ax.scatter(xydata.offset, xydata.amps/xydata.amps.min(), label='Xtraj data')
-ax.scatter(yydata.offset, yydata.amps/yydata.amps.max(), label='Ytraj data')
-ax.legend()
-ax.set_xlabel('Yoffset')
-ax.set_ylabel('Normalized Amplitude')
-
-# Plot concavity plots
-fig, ax = plt.subplots()
-ax.scatter(xxdata.offset, xxdata.amps/xxdata.amps.max(), label='Xtraj data')
-ax.scatter(yxdata.offset, yxdata.amps/yxdata.amps.min(), label='Ytraj data')
-ax.legend()
-ax.set_xlabel('Xoffset')
-ax.set_ylabel('Normalized Amplitude')
 
 # =============================================================================
+# # Plot concavity plots
+# fig, ax = plt.subplots()
+# ax.scatter(xydata.offset, xydata.amps/xydata.amps.min(), label='Xtraj data')
+# ax.scatter(yydata.offset, yydata.amps/yydata.amps.max(), label='Ytraj data')
+# ax.legend()
+# ax.set_xlabel('Yoffset')
+# ax.set_ylabel('Normalized Amplitude')
+# 
+# # Plot concavity plots
+# fig, ax = plt.subplots()
+# ax.scatter(xxdata.offset, xxdata.amps/xxdata.amps.max(), label='Xtraj data')
+# ax.scatter(yxdata.offset, yxdata.amps/yxdata.amps.min(), label='Ytraj data')
+# ax.legend()
+# ax.set_xlabel('Xoffset')
+# ax.set_ylabel('Normalized Amplitude')
+# 
 # # Plot wire alignment
 # fig, ax = plt.subplots()
 # ax.plot(xypeak_data.peak, xypeak_data.axis, label='Xtraj data')

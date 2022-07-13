@@ -30,7 +30,7 @@ def analyze_wirescan(file, path='', plot=True):
         meas = wirescan.loc[meas_offset].copy()
         meas.rename(columns = {traj:'data'}, inplace=True)
         amplitudes, means = get_measurement_amplitudes(meas,
-                                                           annotate_plot=True,
+                                                           annotate_plot=False,
                                                            ref_magnet=False,
                                                            return_means=True)
         temp_df = pd.DataFrame(np.array([amplitudes, 
@@ -39,8 +39,8 @@ def analyze_wirescan(file, path='', plot=True):
                                          ]).T, 
                                columns=['amps','means','offset'])
         data = pd.concat([data, temp_df])
-        
-    
+    data = data.astype(float)
+
     # Create peak_data DataFrame:
         # Columns = axis, extrema (of quadratic fits)
         # Index = Peak number (no repeating)
@@ -244,11 +244,16 @@ def polyfit_peak(time, data, est_pktime, window=3e-5, porder=5, plot=False):
         return pktime, polydata.max()
 
 
-def fit_concavity(offsets, amplitudes):
+def fit_concavity(offsets, amplitudes, plot=False):
     '''Return the axis and offset of a poly fit'''
+    if plot:
+        fig, ax = plt.subplots()
+        ax.scatter(offsets, amplitudes)
     a,b,c = np.polyfit(offsets, amplitudes, 2)
     axis = -b/(2*a)
     extrema = c-b**2/(4*a)
+    if plot:
+        ax.plot(offsets, a*offsets**2+b*offsets+c)
     return axis, extrema
 
 
