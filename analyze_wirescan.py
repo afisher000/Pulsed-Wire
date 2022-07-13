@@ -11,57 +11,80 @@ import pulsedwire as pwf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 import os
 plt.close('all')
 
-pwf.analyze_wirescan('2022-07-12 (ytraj, yoffset).csv')
 
+# pwf.analyze_wirescan('2022-07-12 (xtraj, yoffset).csv')
+def plot_theory(ax, wire_position, sign=1):
+    theory_offsets = np.linspace(-1500,1500,100)
+    ku = 2*np.pi/32e3 #um
+    if sign>0:
+        coeff = 1.53
+        sign = 1
+    else:
+        coeff = 1.16
+        sign = -1
+
+    theory_amplitudes = 1 + sign*0.5*(ku*coeff*(theory_offsets-wire_position))**2
+    ax.plot(theory_offsets, theory_amplitudes, label='Theory')
+    return
 
 
 # path = 'C:\\Users\\afisher\\Documents\\Magnet Tuning\\Summer 2022 FASTGREENS\\April 2022 Pulse Wire\\Centering Wire'
-# =============================================================================
-# path = ''
-# xyfile = '2022-07-12 (xtraj, yoffset).csv'
-# yyfile = '2022-07-11 (ytraj, yoffset).csv'
-# xxfile = '2022-07-12 (xtraj, xoffset).csv'
-# yxfile = '2022-07-12 (ytraj, xoffset).csv'
-# 
-# xydata, xypeak_data = pwf.analyze_wirescan(xyfile, plot=False)
-# yydata, yypeak_data = pwf.analyze_wirescan(yyfile, plot=False)
-# xxdata, xxpeak_data = pwf.analyze_wirescan(xxfile, plot=False)
-# yxdata, yxpeak_data = pwf.analyze_wirescan(yxfile, plot=False)
-# =============================================================================
+path = ''
+xyfile = '2022-07-12 (xtraj, yoffset).csv'
+yyfile = '2022-07-12 (ytraj, yoffset).csv'
+xxfile = '2022-07-12 (xtraj, xoffset).csv'
+yxfile = '2022-07-12 (ytraj, xoffset).csv'
+
+xydata, xypeak_data = pwf.analyze_wirescan(xyfile, plot=False)
+yydata, yypeak_data = pwf.analyze_wirescan(yyfile, plot=False)
+xxdata, xxpeak_data = pwf.analyze_wirescan(xxfile, plot=False)
+yxdata, yxpeak_data = pwf.analyze_wirescan(yxfile, plot=False)
 
 
-# =============================================================================
-# # Plot concavity plots
-# fig, ax = plt.subplots()
-# ax.scatter(xydata.offset, xydata.amps/xydata.amps.min(), label='Xtraj data')
-# ax.scatter(yydata.offset, yydata.amps/yydata.amps.max(), label='Ytraj data')
-# ax.legend()
-# ax.set_xlabel('Yoffset')
-# ax.set_ylabel('Normalized Amplitude')
-# 
-# # Plot concavity plots
-# fig, ax = plt.subplots()
-# ax.scatter(xxdata.offset, xxdata.amps/xxdata.amps.max(), label='Xtraj data')
-# ax.scatter(yxdata.offset, yxdata.amps/yxdata.amps.min(), label='Ytraj data')
-# ax.legend()
-# ax.set_xlabel('Xoffset')
-# ax.set_ylabel('Normalized Amplitude')
-# 
-# # Plot wire alignment
-# fig, ax = plt.subplots()
-# ax.plot(xypeak_data.peak, xypeak_data.axis, label='Xtraj data')
-# ax.plot(yypeak_data.peak, yypeak_data.axis, label='Ytraj data')
-# ax.legend()
-# ax.set_ylabel('Yoffset')
-# ax.set_xlabel('Peak Number')
-# 
-# fig, ax = plt.subplots()
-# ax.plot(xxpeak_data.peak, xxpeak_data.axis, label='Xtraj data')
-# ax.plot(yxpeak_data.peak, yxpeak_data.axis, label='Ytraj data')
-# ax.legend()
-# ax.set_ylabel('Xoffset')
-# ax.set_xlabel('Peak Number')
-# =============================================================================
+
+cmap = plt.get_cmap('coolwarm')
+# Plot concavity plots
+fig, ax = plt.subplots()
+ax.scatter(xydata.offset, xydata.amps/xypeak_data.extrema.mean(), 
+           label='Xtraj data', c=xydata.index)
+plot_theory(ax, xypeak_data.axis.mean(), 1)
+ax.scatter(yydata.offset, yydata.amps/yypeak_data.extrema.mean(), label='Ytraj data',
+           c=yydata.index)
+plot_theory(ax, yypeak_data.axis.mean(), -1)
+ax.legend()
+ax.set_xlabel('Yoffset')
+ax.set_ylabel('Normalized Amplitude')
+fig.colorbar(matplotlib.cm.ScalarMappable(), ax=ax)
+
+# Plot concavity plots
+fig, ax = plt.subplots()
+ax.scatter(xxdata.offset, xxdata.amps/xxpeak_data.extrema.mean(), 
+           label='Xtraj data', c=xxdata.index)
+plot_theory(ax, xxpeak_data.axis.mean(), 1)
+ax.scatter(yxdata.offset, yxdata.amps/yxpeak_data.extrema.mean(), label='Ytraj data',
+           c=yxdata.index)
+plot_theory(ax, yxpeak_data.axis.mean(), -1)
+ax.legend()
+ax.set_xlabel('Xoffset')
+ax.set_ylabel('Normalized Amplitude')
+fig.colorbar(matplotlib.cm.ScalarMappable(), ax=ax)
+
+
+# Plot wire alignment
+fig, ax = plt.subplots()
+ax.plot(xypeak_data.peak, xypeak_data.axis, label='Xtraj data')
+ax.plot(yypeak_data.peak, yypeak_data.axis, label='Ytraj data')
+ax.legend()
+ax.set_ylabel('Yoffset')
+ax.set_xlabel('Peak Number')
+
+fig, ax = plt.subplots()
+ax.plot(xxpeak_data.peak, xxpeak_data.axis, label='Xtraj data')
+ax.plot(yxpeak_data.peak, yxpeak_data.axis, label='Ytraj data')
+ax.legend()
+ax.set_ylabel('Xoffset')
+ax.set_xlabel('Peak Number')
