@@ -16,7 +16,7 @@ import os
 import re
 plt.close('all')
 
-folder = '2022-07-12 ytraj calibration'
+folder = '2022-07-13 ytraj calibration'
 disp = []
 for file in os.listdir(folder):
     regex = re.compile('(-?[\d]*)um.csv')
