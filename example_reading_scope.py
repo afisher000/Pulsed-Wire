@@ -15,7 +15,7 @@ import os
 import matplotlib.pyplot as plt
 
 # folder = '2022-07-13 (ytraj, xoffset)'
-file = 'dispersion_mid2(-5in).csv'
+file = 'dispersion_0in_3pm.csv'
 
 # Take scope measurement
 params = {
