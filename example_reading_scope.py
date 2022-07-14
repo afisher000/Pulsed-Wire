@@ -14,15 +14,15 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-folder = '2022-07-13 (ytraj, xoffset)'
-file = '(750,0).1.csv'
+# folder = '2022-07-13 (ytraj, xoffset)'
+file = 'dispersion_mid2(-5in).csv'
 
 # Take scope measurement
 params = {
     'max_meas':30,
     'channel_map':{'ch2':'y'},
-    'rep_rate':1.4,
-    'filename':os.path.join(folder, file)
+    'rep_rate':1.0,
+    'filename':file
     }
 scope_id = 'USB0::0x699::0x408::C031986::INSTR'
 df = scope.read_measurements(scope_id, **params)
