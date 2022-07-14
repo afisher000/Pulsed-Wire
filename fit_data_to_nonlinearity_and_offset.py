@@ -23,12 +23,12 @@ plt.close('all')
 folder = '2022-07-12 ytraj calibration'
 cal_data = pwf.read_calibration(path=folder, plot=False)
 
-xyfile = '2022-07-12 (ytraj, xoffset).csv'
-data, peak_data = pwf.analyze_wirescan(xyfile, plot=False)
+file = '2022-07-12 (ytraj, xoffset).csv'
+data, peak_data = pwf.analyze_wirescan(file, plot=False)
 
 # Get trajectory and offset coordinates
-traj = xyfile[xyfile.find('traj')-1]
-offset = xyfile[xyfile.find('offset')-1]
+traj = file[file.find('traj')-1]
+offset = file[file.find('offset')-1]
 
 # Apply quadratic field to calibration data
 trun_cal_data = cal_data[cal_data.amps>cal_data.amps.max()*.7]
