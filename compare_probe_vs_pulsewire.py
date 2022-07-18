@@ -18,11 +18,46 @@ from sklearn.linear_model import LinearRegression
 plt.close('all')
 
 
-pw = pd.read_csv('final_trajectory_shortened.csv')
-#pw = pd.read_csv('May10 pulsedwire trajectories.csv')
-pw.x = pw.x - pw.x.iloc[0]
-pw.y = pw.y - pw.y.iloc[0]
-hp = pd.read_csv('hall_probe_trajectories.csv')
+def df_from_files(files):
+    ''' Gather data from files and return as struct with columns including
+    ['x', 'timex','y','timey']. If only one file, it is assumed the columns 
+    include ['time','x','y'] already. If two files, it is assumed they are
+    wirescan files for xtraj and ytraj, respectively. The data for the offset=0
+    scan is returned.'''
+    
+    if not isinstance(files,list):
+        files=[files]
+        
+    if len(files)==1:
+        df = pd.read_csv(files[0])
+        df['timex'] = df.time
+        df['timey'] = df.time
+        return df
+    elif len(files)==2:
+        xfile, yfile = files
+        
+        offset = xfile[xfile.find('offset')-1] + 'offset'
+        xdata = pd.read_csv(xfile)
+        xdata = xdata[xdata[offset]==0].drop(['iteration',offset], axis=1).reset_index(drop=True)
+        
+        offset = yfile[yfile.find('offset')-1] + 'offset'
+        ydata = pd.read_csv(yfile)
+        ydata = ydata[ydata[offset]==0].drop(['iteration',offset], axis=1).reset_index(drop=True)
+        
+        return xdata.join(ydata, lsuffix='x', rsuffix='y')
+    else:
+        print('Type of data returned from files not recognized.')
+        return
+    
+
+xtraj_file = '2022-07-11 (xtraj, yoffset).csv'
+ytraj_file = '2022-07-11 (ytraj, xoffset).csv'
+pw = df_from_files([xtraj_file, ytraj_file])
+# pw = df_from_files('May10 pulsedwire trajectories.csv')
+# pw = df_from_files('final_trajectory_shortened.csv')
+
+hp = df_from_files('hall_probe_trajectories.csv')
+
 
 def format_peakdata_for_regression(df, coord):
     ''' Does computations to find time, value pairs for peaks. The formatted 
@@ -36,12 +71,12 @@ def format_peakdata_for_regression(df, coord):
     df[coord+'p'] = np.append(0, np.diff(df[coord]))
     
     # Get estimate peak times
-    est_pktimes, _ = pwf.get_measurement_pktimes_from_derivative(df.time, df[coord+'p'])
+    est_pktimes, _ = pwf.get_measurement_pktimes_from_derivative(df['time'+coord], df[coord+'p'])
     period = np.diff(est_pktimes).mean()
     
     # Get exact peak data
-    peak_data = [pwf.polyfit_peak(df.time, df[coord], est_pktime, window=period/5) 
-                 for est_pktime in est_pktimes[:19]]
+    peak_data = [pwf.polyfit_peak(df['time'+coord], df[coord], est_pktime, window=period/5) 
+                 for est_pktime in est_pktimes[3:-3]]
     
     return np.array(peak_data)
 
@@ -53,7 +88,7 @@ x_results = xmodel.predict(hp[['time','x']].values)
 x_time = x_results[:,0]
 x_hp_transform = x_results[:,1]
 x_hpfit = interp1d(x_time, x_hp_transform, fill_value=None, bounds_error=False) 
-x_pwfit = interp1d(pw.time, pw.x, fill_value=None, bounds_error=False)
+x_pwfit = interp1d(pw.timex, pw.x, fill_value=None, bounds_error=False)
 
 #### Y Trajectory ####
 ymodel = LinearRegression()
@@ -63,7 +98,7 @@ y_results = ymodel.predict(hp[['time','y']].values)
 y_time = y_results[:,0]
 y_hp_transform = y_results[:,1]
 y_hpfit = interp1d(y_time, y_hp_transform, fill_value=None, bounds_error=False)
-y_pwfit = interp1d(pw.time, pw.y, fill_value=None, bounds_error=False)
+y_pwfit = interp1d(pw.timey, pw.y, fill_value=None, bounds_error=False)
 
 
 

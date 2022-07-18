@@ -26,8 +26,10 @@ plt.close('all')
 
 '''
 ##### WARNING #####
-This code is unreliable until the non-symetric travelling waves on the string
-can be understood.
+This code may be unreliable since it relies on the deflection of the wire as
+a constant between different measurements, and I have been unable to make 
+that measurement to better than 10% accuracy. It would be better to place the
+detector a little ways from the undulator and flatten the earth's fields by eye.
 '''
 
 # Inputs

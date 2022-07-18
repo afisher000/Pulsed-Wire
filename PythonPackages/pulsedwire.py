@@ -11,7 +11,112 @@ import pandas as pd
 from scipy.signal import find_peaks, savgol_filter
 from scipy.interpolate import interp1d
 import re
+from scipy.fft import rfft, rfftfreq, irfft
 
+def correct_dispersion(td, c0=207.488, EIwT=2*6.433e-8, fourier_kwargs={}, reduce_tpoints = 100):
+    '''Pass in time_data dataframe with columns 'time' and 'data'. Parmeters
+    c0 and EIwT define the dispersion according to c(k) = c0*sqrt(1+EIwT*k**2).
+    Fourier_kwargs give control over how the Fourier transform is implemented.
+    See get_fourier_transform() for more details. U0(t) must be integrated
+    numerically and reduce_tpoints reduces the number of datapoints where the
+    signal is evaluated. Return time_data and fourier_data DataFrames with new
+    columns added.'''
+    
+    # 2) Get G(w) via fft, add 'omega' column to fourier_data
+    fd = get_fourier_transform(td, c0=c0, **fourier_kwargs)
+    
+    # 3) Add 'omega', 'k', 'speed', and 'omega0' columns to fourier_data
+    fd['omega'] = 2*np.pi*fd.freq
+    if EIwT==0:
+        fd['k'] = fd.omega/c0
+    else:
+        fd['k'] = np.sqrt( np.sqrt(fd.omega**2/c0**2/EIwT + 1/4/EIwT**2) - 1/2/EIwT)
+    fd['speed'] = c0*np.sqrt(1+EIwT*fd.k**2)
+    fd['omega0'] = c0*fd.k
+    
+    # 4) Add 'Fk' column and scale spectra column
+    fd['Fk'] = (fd.speed/c0)**3 + EIwT*fd.k**2*fd.speed/c0
+    fd['spectra0'] = fd.spectra*fd.Fk
+    
+    # 5) Get u0(t) by manual integration (w=c0*k now..., so unequally spaced)
+    time0 = td.time.values[::reduce_tpoints]
+    H0 = fd.spectra0.values.reshape((-1,1))
+    k0 = fd.k.values.reshape((-1,1))
+    dk0 = np.diff(k0[:,0], append=k0[-1,0]).reshape((-1,1))/(2*np.pi)
+    phase0 = np.exp(1j*np.outer(c0*k0,time0))
+    matrix = H0*phase0*c0*dk0
+    u0 = np.sum(matrix, axis=0) - 0.5*matrix[0,:] # Half of zero frequency belongs to [0, inf) integral
+    u0 = u0.real*2 #Add to negative frequencies (complex conj)
+    
+    # Add data0 column to td
+    td['data0'] = np.nan
+    td.data0.iloc[::reduce_tpoints] = u0
+    td = td.interpolate()
+
+    return td, fd
+
+
+def get_fourier_transform(time_data, c0=207.488, freq_range=None, reduce_fmax=1, 
+                          reduce_df=1, unwind_phase=False):
+    ''' Takes the fourier transfrom of a signal from the columns 'time' and 
+    'data' in the time_data DataFrame and returns the frequency, amplitude, 
+    and phase data in a DataFrame. Optionally choose a frequency
+    range to return. Reduce_fmax uses every nth datapoint to speed up the 
+    transform when a smaller maximum frequency is acceptable. Reduce_df increases
+    the frequency resolution by padding data with a linear ramp fits from the 
+    first/last 1/2 period length of data. This is valid when the signal is
+    localized. Complex phases are multiplied to shift time such that data 
+    collection starts at t=0.'''
+    td = time_data
+    
+    # Pad/skip data to change frequency resolution
+    pad_points = int((reduce_df-1)*len(td)/2)
+    data_values = np.pad(td.data.values, 
+                         (pad_points, pad_points),
+                         mode='edge')
+    
+    # Take transform
+    data_values = data_values[::reduce_fmax]
+    yf = rfft(data_values)
+    freq = rfftfreq(len(data_values), td.time.diff().mean()*reduce_fmax)
+    
+    # Scale spectra by npoints and df
+    yf = yf/len(data_values)/np.diff(freq).mean()
+    
+    # Shift to t=0
+    start_time = td.time.mean() - reduce_df/2*(td.time.max()-td.time.min())
+    yf = yf * np.exp(-1j * 2*np.pi*freq * start_time)
+    amp = abs(yf)
+    phase = np.angle(yf)
+    
+    # Build data frame
+    fourier_data = pd.DataFrame(np.vstack([freq, yf, amp, phase]).T, columns=['freq', 'spectra', 'amp','phase'])
+    fourier_data.freq = fourier_data.freq.apply(np.real)
+    fourier_data.amp = fourier_data.amp.apply(np.real)
+    fourier_data.phase = fourier_data.phase.apply(np.real)
+
+    
+    # Make phase monotonically increasing (assume no jump in dstep > 2*pi)
+    
+    if unwind_phase:
+        d = np.diff(fourier_data.phase, prepend=0)
+        sign = d[np.abs(d)<np.pi].mean() #remove jumps
+        if sign>=0:
+            cycles = np.cumsum(d<-np.pi)
+            fourier_data.phase = fourier_data.phase + cycles*(2*np.pi)
+        else:
+            cycles = np.cumsum(d>np.pi)
+            fourier_data.phase = fourier_data.phase - cycles*(2*np.pi)
+
+    if freq_range is not None:
+        fourier_data = fourier_data[fourier_data.freq.between(*freq_range)]
+        
+    if max(freq)<freq_range[1]:
+        print('Warning: Max frequency from Fourier Transform is less than freq_range maximum.')
+    return fourier_data
+
+    
+    
 def read_calibration(path='', plot=False):
     ''' Folder should contain files of the format '#.um.csv'.'''
 
@@ -57,7 +162,7 @@ def read_calibration(path='', plot=False):
     return data
 
 
-def analyze_wirescan(file, path='', plot=True):
+def analyze_wirescan(file, path='', plot=True, remove_dispersion=False):
     print(f'Reading {file}')
     # Parse trajectory and offset direction
     traj = file[file.find('traj')-1]
@@ -75,6 +180,15 @@ def analyze_wirescan(file, path='', plot=True):
     for meas_offset in wirescan.index.get_level_values(level=0).unique():
         meas = wirescan.loc[meas_offset].copy()
         meas.rename(columns = {traj:'data'}, inplace=True)
+        
+        if remove_dispersion:
+            fourier_kwargs = dict(freq_range=[-1, 8e4], 
+                          reduce_fmax=100, 
+                          reduce_df=10,
+                          unwind_phase=False)
+            td, fd = correct_dispersion(meas.copy(), reduce_tpoints = 100, fourier_kwargs=fourier_kwargs)
+            meas = td[['time','data0']].rename(columns={'data0':'data'}).copy()
+
         amplitudes, means = get_measurement_amplitudes(meas,
                                                            annotate_plot=False,
                                                            ref_magnet=False,
@@ -167,7 +281,12 @@ def get_linear_calibration(file, plot=False, ax=None):
     return cals
 
 def get_measurement_amplitudes(measurement, annotate_plot=False, ref_magnet=True, return_means=False):
-    ''' Computes the relative amplitudes of the measurement.'''
+    ''' Computes the relative amplitudes of the measurement. The input measurement
+    must be a dataframe with columns 'time' and 'data'. It is changed during the 
+    function so copies should be passed to avoid corruption. The annotate_plot
+    flag is for troubleshooting whether the signal_range and peaks are found
+    correctly. The function handles signals with and without reference magnets.
+    Peak means are returned optionally.'''
     
     # Add savgol_filter smoothing for downsampling
     measurement['savgol'] = savgol_filter(measurement.data, round(len(measurement)/100+1), 3)

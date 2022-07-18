@@ -20,11 +20,11 @@ import matplotlib.pyplot as plt
 plt.close('all')
 
 # Read in data
-folder = '2022-07-12 ytraj calibration'
+folder = '2022-07-12 xtraj calibration'
 cal_data = pwf.read_calibration(path=folder, plot=False)
 
-file = '2022-07-12 (ytraj, xoffset).csv'
-data, peak_data = pwf.analyze_wirescan(file, plot=False)
+file = '2022-07-12 (xtraj, yoffset).csv'
+data, peak_data = pwf.analyze_wirescan(file, plot=False, remove_dispersion=True)
 
 # Get trajectory and offset coordinates
 traj = file[file.find('traj')-1]

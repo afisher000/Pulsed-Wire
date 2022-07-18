@@ -39,10 +39,10 @@ yyfile = '2022-07-12 (ytraj, yoffset).csv'
 xxfile = '2022-07-12 (xtraj, xoffset).csv'
 yxfile = '2022-07-12 (ytraj, xoffset).csv'
 
-xydata, xypeak_data = pwf.analyze_wirescan(xyfile, plot=False)
-yydata, yypeak_data = pwf.analyze_wirescan(yyfile, plot=False)
-xxdata, xxpeak_data = pwf.analyze_wirescan(xxfile, plot=False)
-yxdata, yxpeak_data = pwf.analyze_wirescan(yxfile, plot=False)
+xydata, xypeak_data = pwf.analyze_wirescan(xyfile, plot=False, remove_dispersion=False)
+yydata, yypeak_data = pwf.analyze_wirescan(yyfile, plot=False, remove_dispersion=False)
+xxdata, xxpeak_data = pwf.analyze_wirescan(xxfile, plot=False, remove_dispersion=False)
+yxdata, yxpeak_data = pwf.analyze_wirescan(yxfile, plot=False, remove_dispersion=False)
 
 
 
