@@ -50,8 +50,8 @@ def df_from_files(files):
         return
     
 
-xtraj_file = '2022-07-11 (xtraj, yoffset).csv'
-ytraj_file = '2022-07-11 (ytraj, xoffset).csv'
+xtraj_file = '2022-07-12 (xtraj, yoffset).csv'
+ytraj_file = '2022-07-12 (ytraj, xoffset).csv'
 pw = df_from_files([xtraj_file, ytraj_file])
 # pw = df_from_files('May10 pulsedwire trajectories.csv')
 # pw = df_from_files('final_trajectory_shortened.csv')
@@ -116,6 +116,13 @@ axes[1,0].set_xlabel('Scope Time (s)')
 axes[1,1].set_xlabel('Scope Time (s)')
 axes[0,0].set_ylabel('Signal (V)')
 axes[1,0].set_ylabel('Signal (V)')
+
+fig, ax = plt.subplots()
+ax.plot(x_time, x_hpfit(x_time), label='Hall Probe')
+ax.plot(x_time, x_pwfit(x_time), label='Pulsed-wire')
+ax.set_xlabel('Scope Time (s)')
+ax.set_ylabel('Trajectory')
+ax.legend()
 
 
 

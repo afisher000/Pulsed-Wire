@@ -17,7 +17,7 @@ plt.close('all')
 
 
 # pwf.analyze_wirescan('2022-07-12 (xtraj, yoffset).csv')
-def plot_theory(ax, wire_position, sign=1):
+def plot_theory(ax, wire_position, sign=1, label='Theory'):
     theory_offsets = np.linspace(-1500,1500,100)
     ku = 2*np.pi/32e3 #um
     if sign>0:
@@ -28,7 +28,7 @@ def plot_theory(ax, wire_position, sign=1):
         sign = -1
 
     theory_amplitudes = 1 + sign*0.5*(ku*coeff*(theory_offsets-wire_position))**2
-    ax.plot(theory_offsets, theory_amplitudes, label='Theory')
+    ax.plot(theory_offsets, theory_amplitudes, label=label)
     return
 
 
@@ -47,6 +47,29 @@ yxdata, yxpeak_data = pwf.analyze_wirescan(yxfile, plot=False, remove_dispersion
 
 
 cmap = plt.get_cmap('coolwarm')
+
+# Plot single peak concavity plot
+pk = 0
+fig, ax = plt.subplots()
+ax.scatter(xydata.loc[pk].offset, xydata.loc[pk].amps/xypeak_data.extrema.loc[pk],
+           label='Y traj.')
+plot_theory(ax, xypeak_data.axis.loc[pk], sign=1, label='Thy: alpha=1.53')
+ax.scatter(xxdata.loc[pk].offset, xxdata.loc[pk].amps/xxpeak_data.extrema.loc[pk],
+           label='X traj.')
+plot_theory(ax, xxpeak_data.axis.loc[pk], sign=-1, label='Thy: beta=1.16')
+ax.set_xlabel('Wire Displacement in Y (um)')
+ax.set_ylabel('Norm. Amplitude')
+ax.legend()
+
+# Plot single peak concavity plot
+fig, ax = plt.subplots()
+ax.scatter(yxdata.loc[0].offset, yxdata.loc[0].amps/yxpeak_data.extrema.loc[0])
+plot_theory(ax, yxpeak_data.axis.loc[0], sign=1)
+ax.scatter(xxdata.loc[0].offset, xxdata.loc[0].amps/xxpeak_data.extrema.loc[0])
+plot_theory(ax, xxpeak_data.axis.loc[0], sign=-1)
+ax.set_xlabel('Wire Displacement in X (um)')
+ax.set_ylabel('Norm. Peak Amplitude')
+
 # Plot concavity plots
 fig, ax = plt.subplots()
 ax.scatter(xydata.offset, xydata.amps/xypeak_data.extrema.mean(), 
