@@ -52,9 +52,11 @@ def df_from_files(files):
 
 xtraj_file = '2022-07-11 (xtraj, yoffset).csv'
 ytraj_file = '2022-07-11 (ytraj, xoffset).csv'
-pw = df_from_files([xtraj_file, ytraj_file])
-# pw = df_from_files('May10 pulsedwire trajectories.csv')
+# pw = df_from_files([xtraj_file, ytraj_file])
+# pw = df_from_files('2022-05-10 final_trajectory.csv')
 # pw = df_from_files('final_trajectory_shortened.csv')
+# pw = pd.read_csv('2022-07-18 final_trajectory.csv')
+pw = pd.read_csv('2022-07-18 corrected_final_trajectory.csv')
 
 hp = df_from_files('hall_probe_trajectories.csv')
 
@@ -76,7 +78,7 @@ def format_peakdata_for_regression(df, coord):
     
     # Get exact peak data
     peak_data = [pwf.polyfit_peak(df['time'+coord], df[coord], est_pktime, window=period/5) 
-                 for est_pktime in est_pktimes[3:-3]]
+                 for est_pktime in est_pktimes]
     
     return np.array(peak_data)
 
@@ -117,6 +119,9 @@ axes[1,1].set_xlabel('Scope Time (s)')
 axes[0,0].set_ylabel('Signal (V)')
 axes[1,0].set_ylabel('Signal (V)')
 
+# Write xtraj fits
+data = np.hstack([x_time, x_hpfit(x_time), x_pwfit(x_time)]).reshape(3, len(x_time)).T
+pd.DataFrame(data, columns=['time','hallprobe','pulsedwire']).to_csv('xtraj_comparison.csv')
 
 
 

@@ -29,7 +29,7 @@ def plot_theory(ax, wire_position, sign=1):
 
     theory_amplitudes = 1 + sign*0.5*(ku*coeff*(theory_offsets-wire_position))**2
     ax.plot(theory_offsets, theory_amplitudes, label='Theory')
-    return
+    return (theory_offsets, theory_amplitudes)
 
 
 # path = 'C:\\Users\\afisher\\Documents\\Magnet Tuning\\Summer 2022 FASTGREENS\\April 2022 Pulse Wire\\Centering Wire'
@@ -47,6 +47,44 @@ yxdata, yxpeak_data = pwf.analyze_wirescan(yxfile, plot=False, remove_dispersion
 
 
 cmap = plt.get_cmap('coolwarm')
+
+
+# Plot single concavity plot
+pk = 10
+fig, ax = plt.subplots()
+ax.scatter(xydata.loc[pk].offset, xydata.loc[pk].amps/xypeak_data.loc[pk].extrema, label='Xtraj data')
+plot_theory(ax, xypeak_data.loc[pk].axis, 1)
+
+ax.scatter(yydata.loc[pk].offset, yydata.loc[pk].amps/yypeak_data.loc[pk].extrema, label='Ytraj data')
+plot_theory(ax, yypeak_data.loc[pk].axis, -1)
+ax.legend()
+ax.set_xlabel('Yoffset')
+ax.set_ylabel('Normalized Amplitude')
+
+xy_xdata = xydata.loc[pk].offset.values
+xy_ydata = xydata.loc[pk].amps.values/xypeak_data.loc[pk].extrema
+[xyfit_xdata, xyfit_ydata] = plot_theory(ax, xypeak_data.loc[pk].axis, 1)
+yy_xdata = yydata.loc[pk].offset.values
+yy_ydata = yydata.loc[pk].amps.values/yypeak_data.loc[pk].extrema
+[yyfit_xdata, yyfit_ydata] = plot_theory(ax, yypeak_data.loc[pk].axis, -1)
+
+fig, ax = plt.subplots()
+ax.plot(xy_xdata, xy_ydata)
+ax.plot(xyfit_xdata, xyfit_ydata)
+ax.plot(yy_xdata, yy_ydata)
+ax.plot(yyfit_xdata, yyfit_ydata)
+
+fit_data = np.hstack([xyfit_xdata, xyfit_ydata, yyfit_xdata, yyfit_ydata]).reshape(4, len(xyfit_xdata)).T
+pd.DataFrame(fit_data, columns=['xyfit_xdata','xyfit_ydata','yyfit_xdata','yyfit_ydata']).to_csv('concavity_fit_data.csv')
+
+data = np.hstack([xy_xdata, xy_ydata]).reshape(2, len(xy_xdata)).T
+pd.DataFrame(data, columns=['xdata','ydata']).to_csv('xtrajyoffset_concavity_data.csv')
+
+data = np.hstack([yy_xdata, yy_ydata]).reshape(2, len(yy_xdata)).T
+pd.DataFrame(data, columns=['xdata','ydata']).to_csv('ytrajyoffset_concavity_data.csv')
+
+
+
 # Plot concavity plots
 fig, ax = plt.subplots()
 ax.scatter(xydata.offset, xydata.amps/xypeak_data.extrema.mean(), 

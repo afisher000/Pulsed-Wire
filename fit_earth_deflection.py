@@ -13,11 +13,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.close('all')
 
-ref = pd.read_csv('2022-07-18 earth_deflection.2.csv')
+ref_file = '2022-07-18 earth_deflection.2.csv'
+data_file = '2022-07-18 final_trajectory_y.csv'
+
+
+
+
+
+ref = pd.read_csv(ref_file)
 meas = ref.rename(columns={'y':'data'})
 ref_amps, ref_means = pwf.get_measurement_amplitudes(meas, annotate_plot=False, ref_magnet=False, return_means=True)
 
-data = pd.read_csv('2022-07-18 test signal.5.csv')
+data = pd.read_csv(data_file)
 meas = data.rename(columns={'y':'data'})
 amps, means = pwf.get_measurement_amplitudes(meas, annotate_plot=False, ref_magnet=False, return_means=True)
 
@@ -29,12 +36,27 @@ fitdata = ref[ref.time.between(0, 2.5e-3)]
 qfit = np.polyfit(fitdata.time, fitdata.y, 3)
 
 # Plot
-ax = ref.plot(x='time', y='y')
-ax.plot(data.time, np.polyval(qfit, data.time))
-ax.plot(data.time, data.y)
+fig, ax = plt.subplots()
+ax.plot(ref.time, ref.y, label='Reference')
+ax.plot(data.time, np.polyval(qfit, data.time), label='Curve fit')
+ax.plot(data.time, data.y, label='Measurement')
+ax.legend()
+ax.set_xlabel('Time (s)')
+ax.set_ylabel('Volts')
 
 # Subtract curvature from signal
 data['fit'] = np.polyval(qfit, data.time)
+data['corrected'] = data.y - data.fit
 fig, ax = plt.subplots()
-ax.plot(data.time, data.y - data.fit)
+ax.plot(data.time, data.corrected, label='Corrected signal')
 ax.set_xlim([0, data.time.max()])
+ax.legend()
+
+
+# =============================================================================
+# # Compute corrected final trajectories
+# xdata = pd.read_csv('2022-07-18 final_trajectory_x.csv')
+# data = xdata.join(data[['time','corrected']].rename(columns={'corrected':'y'}),
+#                   lsuffix='x', rsuffix='y')
+# data.to_csv('2022-07-18 corrected_final_trajectory.csv')
+# =============================================================================
