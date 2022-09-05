@@ -339,7 +339,7 @@ def get_measurement_pktimes_from_derivative(time, datap):
     peaks times for raw measurement.'''
         
     max_width = len(time)/10
-    peaks, _ = find_peaks(datap, prominence=datap.max(), width=(0,max_width))
+    peaks, _ = find_peaks(datap, prominence=datap.max()*.7, width=(0,max_width))
     pktimes = time[peaks].values
     
     period = np.diff(pktimes).mean()
@@ -351,7 +351,7 @@ def get_measurement_pktimes_from_derivative(time, datap):
     min_pktimes = pktimes-period/4
     all_pktimes = np.sort(np.append(max_pktimes, min_pktimes))
     
-    if len(peaks)!=9:
+    if len(peaks)!=9 and len(peaks)!=29:
         print(f'Incorrect number of peaks: found {len(peaks)}')
         fig, ax = plt.subplots()
         ax.plot(time, datap)

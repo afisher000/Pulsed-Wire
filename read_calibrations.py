@@ -16,7 +16,7 @@ import os
 import re
 plt.close('all')
 
-folder = '2022-07-13 ytraj calibration'
+folder = '2022-07-12 ytraj calibration'
 disp = []
 for file in os.listdir(folder):
     regex = re.compile('(-?[\d]*)um.csv')
@@ -49,6 +49,7 @@ ax_linearfit.legend()
 
 # Signal amplitudes vs um
 data.plot.scatter(x='um', y='amps')
+
 
 # Signal amplitudes vs zeros
 data.plot.scatter(x='zeros', y='amps')
