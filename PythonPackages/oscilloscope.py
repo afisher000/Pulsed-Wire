@@ -14,67 +14,63 @@ Created on Sat Dec 17 10:52:51 2022
 
 # %%
 import time
-import pyvisa
+from pyvisa import ResourceManager
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 
-scope_id = 'USB::0x0699::0x0412::C024123::INSTR'
-event_type = pyvisa.constants.EventType.trig
+class Scope():
+    def __init__(self, scope_id=None):
+        if scope_id is None:
+            scope_id = 'USB::0x0699::0x0412::C024123::INSTR'
 
-#Connect to the instrument
-rm = pyvisa.ResourceManager()
-scope = rm.open_resource(scope_id)
-scope.timeout= 5000
+        # Setup scope
+        rm = ResourceManager()
+        self.osc = rm.open_resource(scope_id)
+        self.osc.timeout= 5000
+        
+        # Read waveform settings
+        self.udpate_wfm_settings()
 
-# Setup trigger
-scope.write('TRIGger:EDGe:SOUrce CH1')
-scope.write('TRIGger:EDGe:SLOpe RISing')
-scope.write('ACQuire:STOPAfter SEQuence')
-
-for j in range(3):
-    # Set to acquire
-    scope.write('ACQ:STATE ON')
-    while scope.query('BUSY?'):
-        print('Scope is busy..')
-        time.sleep(.1)
-    while 'SAV' not in scope.query('TRIGger:State?'):
-        print('Not triggered, wait..')
-        time.sleep(.5)
-    print(j)
-    data = scope.query_binary_values('curve?', 
-                    datatype='b', is_big_endian=True, container=np.array)%256
-
-
-# scope.write('TRIGger')
-# scope.query('TRIGger:STATus?')
-
-# # Plot waveform
-# for j in range(5):
-#     test = scope.query_binary_values('curve?', 
-#                     datatype='b', is_big_endian=True, container=np.array)%256
-
-#     plt.plot(test)
-#     plt.show()
-
-
-
-# loop = 0
-
-# while True:
-#     #increment the loop counter
-#     loop += 1
-#     print (f'On Loop {loop}')
+    def update_wfm_settings(self):
+        ''' Return a pandas Series object containing waveform (wfm) settings '''
+        values = np.array([
+            self.osc.query_ascii_values('wfmoutpre:xinc?')[0],
+            self.osc.query_ascii_values('wfmoutpre:xzero?')[0],
+            self.osc.query_ascii_values('wfmoutpre:ymult?')[0],
+            self.osc.query_ascii_values('wfmoutpre:yoff?')[0],
+            self.osc.query_ascii_values('wfmoutpre:yzero?')[0],
+            self.osc.query_ascii_values('wfmoutpre:nr_pt?')[0]
+            ])
     
-#     #Arm trigger, then loop until scope has triggered
-#     scope.write("ACQ:STATE ON")
-#     while '1' in scope.ask("ACQ:STATE?"):
-#         time.sleep(0.5)
+        names = ['xinc','xzero','ymult','yoff','yzero','points']
+        self.wfm = pd.Series(values, index=names)
+        return
+        
+    def get_measurements(self, channel, shots=10, npoints=100000):
+        # Set Acquisition settings
+        self.osc.write(f'data:source ch{channel}')
+        self.osc.write('data:start 1')
+        self.osc.write(f'data:stop 100000')
+        self.osc.write('ACQuire:STOPAfter SEQuence')
+        
+        for j in range(shots):
+            # Arm acquisition
+            self.osc.write('ACQ:STATE ON')
+            
+            # Wait for acquisition
+            while '1' in self.osc.query('BUSY?'):
+                time.sleep(.1)
+            
+            # Query uint8 data (might need modulus 256)
+            uint8_data = self.osc.query_binary_values( 
+                'curve?', datatype='b', is_big_endian=True, container=np.array
+            )
+            
+            
+            
+            
+            
+            
 
-#     #save all waveforms, then wait for the waveforms to be written
-#     scope.write("SAVE:WAVEFORM ALL, \"E:/Saves/All_%s\"" %loop)
-#     while '1' in scope.ask("BUSY?"):
-#         time.sleep(0.5)
-
-# %%
