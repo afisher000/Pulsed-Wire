@@ -56,9 +56,11 @@ ytraj_file = '2022-07-11 (ytraj, xoffset).csv'
 # pw = df_from_files('2022-05-10 final_trajectory.csv')
 # pw = df_from_files('final_trajectory_shortened.csv')
 # pw = pd.read_csv('2022-07-18 final_trajectory.csv')
-pw = pd.read_csv('2022-07-18 corrected_final_trajectory.csv')
+# pw = pd.read_csv('2022-07-18 corrected_final_trajectory.csv')
+# hp = df_from_files('hall_probe_trajectories.csv')
 
-hp = df_from_files('hall_probe_trajectories.csv')
+pw = pd.read_csv('undulator1_pw_trajectories.csv')
+hp = df_from_files('undulator1_hp_trajectories.csv')
 
 
 def format_peakdata_for_regression(df, coord):
@@ -66,8 +68,8 @@ def format_peakdata_for_regression(df, coord):
     data can be used easily with a linear regression model to compare the 
     hall probe and pulsedwire trajectories.'''
     # Smooth
-    window = len(df)/100 if len(df)/100%2 else len(df)/100+1
-    df[coord] = savgol_filter(df[coord], round(window), 3)
+    window = round(len(df)/100) if round(len(df)/100%2) else round(len(df)/100+1)
+    df[coord] = savgol_filter(df[coord], window, 3)
     
     # Differentiate
     df[coord+'p'] = np.append(0, np.diff(df[coord]))

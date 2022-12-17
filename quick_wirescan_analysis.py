@@ -27,8 +27,6 @@ ax.plot(pkdata.peak, np.polyval(fit, pkdata.peak), c='k')
 
 
 
-
-
 # Estimate wire adjustments
 dist_tuple = np.array([45, 39, 5])*.0254 # dist between p1, und endplates, and p2
 dz = (dist_tuple[1]-(len(pkdata)-1)*0.032/2)/2 
