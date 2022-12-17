@@ -1,100 +1,80 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed May 25 09:47:03 2022
+Created on Sat Dec 17 10:52:51 2022
 
-@author: afish
+@author: afisher
 """
 
+#-------------------------------------------------------------------------------
+#  Save All waveforms to USB every time scope triggers
+
+# python        2.7         (http://www.python.org/)
+# pyvisa        1.4         (http://pyvisa.sourceforge.net/)
+#-------------------------------------------------------------------------------
+
+# %%
+import time
 import pyvisa
 import numpy as np
 import pandas as pd
-from time import sleep
-import os
+import matplotlib.pyplot as plt
 
 
-def get_wfm_settings(scope):
-    ''' Return a pandas Series object containing waveform (wfm) settings '''
-    values = np.array([
-        scope.query_ascii_values('wfmoutpre:xinc?')[0],
-        scope.query_ascii_values('wfmoutpre:xzero?')[0],
-        scope.query_ascii_values('wfmoutpre:ymult?')[0],
-        scope.query_ascii_values('wfmoutpre:yoff?')[0],
-        scope.query_ascii_values('wfmoutpre:yzero?')[0],
-        scope.query_ascii_values('wfmoutpre:nr_pt?')[0]
-        ])
+scope_id = 'USB::0x0699::0x0412::C024123::INSTR'
+event_type = pyvisa.constants.EventType.trig
 
-    names = ['xinc','xzero','ymult','yoff','yzero','points']
-    wfm = pd.Series(values, index=names)
-    return wfm
+#Connect to the instrument
+rm = pyvisa.ResourceManager()
+scope = rm.open_resource(scope_id)
+scope.timeout= 5000
 
-def setup_scope(scope_id, npoints=100000):
-    '''Setup the scope. Set to read npoints at a time.'''
-    rm = pyvisa.ResourceManager()
-    scope = rm.open_resource(scope_id)
-    scope.timeout= 5000
-    scope.write('data:source ch1')
-    scope.write('data:start 1')
-    scope.write(f'data:stop {npoints}')
-    return scope
+# Setup trigger
+scope.write('TRIGger:EDGe:SOUrce CH1')
+scope.write('TRIGger:EDGe:SLOpe RISing')
+scope.write('ACQuire:STOPAfter SEQuence')
 
-def check_measurement(scope, channel_map, trigger_check=0):
-    '''Reads all channels requested and returns in dataframe with columns named
-    by coordinate. If the mean of the first measurement matches trigger_check,
-    no trigger occured between readings and None is returned.'''
+for j in range(3):
+    # Set to acquire
+    scope.write('ACQ:STATE ON')
+    while scope.query('BUSY?'):
+        print('Scope is busy..')
+        time.sleep(.1)
+    while 'SAV' not in scope.query('TRIGger:State?'):
+        print('Not triggered, wait..')
+        time.sleep(.5)
+    print(j)
+    data = scope.query_binary_values('curve?', 
+                    datatype='b', is_big_endian=True, container=np.array)%256
+
+
+# scope.write('TRIGger')
+# scope.query('TRIGger:STATus?')
+
+# # Plot waveform
+# for j in range(5):
+#     test = scope.query_binary_values('curve?', 
+#                     datatype='b', is_big_endian=True, container=np.array)%256
+
+#     plt.plot(test)
+#     plt.show()
+
+
+
+# loop = 0
+
+# while True:
+#     #increment the loop counter
+#     loop += 1
+#     print (f'On Loop {loop}')
     
-    data={}
-    for channel,axis in channel_map.items():
-        scope.write(f'data:source {channel}')
-        data[axis] = scope.query_binary_values('curve?', 
-                        datatype='b', is_big_endian=True, container=np.array)
-        
-        # Return none if duplicate measurement
-        if data[axis].sum()==trigger_check:
-            return None
-    return pd.DataFrame(data)
+#     #Arm trigger, then loop until scope has triggered
+#     scope.write("ACQ:STATE ON")
+#     while '1' in scope.ask("ACQ:STATE?"):
+#         time.sleep(0.5)
 
-def get_measurements(scope, max_meas=20, channel_map={'ch1':'x'}, rep_rate=1.3,
-                      filename=None, average_only=True):
-    '''Build list of dataframes containing data. When reading measurements,
-    check that data changed before incrementing (do not think there is another  
-    way to check if trigger occured). Compute the average, scale according to 
-    the waveform settings, and save to file is filename is not None.'''
-    
-    j = 0
-    data_list = []
-    new_data = check_measurement(scope, channel_map)
-    data_list.append(new_data)
-    trigger_check = new_data.values.sum(axis=0)[0]
-    
-    while j+1<max_meas:
-        sleep(1/rep_rate)
-        new_data = check_measurement(scope, channel_map, trigger_check=trigger_check)
-        if new_data is not None:
-            print(f'Measurement {j+1}')
-            data_list.append(new_data)
-            trigger_check = new_data.values.sum(axis=0)[0]
-            j+=1
-        else:
-            print('Read same data')
-        
-    # Average Measurements
-    df = pd.DataFrame(np.array(data_list).sum(axis=0)/max_meas,
-                      columns=channel_map.values())
-    
-    # Scale uint8 data with waveform settings
-    wfm = get_wfm_settings(scope)
-    for channel, axis in channel_map.items():
-        df[axis] = wfm.yzero + wfm.ymult*df[axis]
-    df['time'] = wfm.xzero + wfm.xinc*np.arange(wfm.points)
-    
-    # Save to file
-    if filename is not None:
-        if os.path.exists(filename):
-            print('File already exists!!!')
-        else:
-            df.to_csv(filename, index=False)
-            print(f'Data saved to {filename}.')
-    else:
-        print('File not saved.')
-    return df
+#     #save all waveforms, then wait for the waveforms to be written
+#     scope.write("SAVE:WAVEFORM ALL, \"E:/Saves/All_%s\"" %loop)
+#     while '1' in scope.ask("BUSY?"):
+#         time.sleep(0.5)
 
+# %%
