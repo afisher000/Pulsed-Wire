@@ -26,7 +26,7 @@ params = {
     }
 scope_id = 'USB0::0x699::0x408::C031986::INSTR'
 scope = osc.setup_scope(scope_id, npoints=100000)
-df = osc.read_measurements(scope, **params)
+df = osc.get_measurements(scope, **params)
 df.plot(x='time', y='y')
 
 

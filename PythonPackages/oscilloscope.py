@@ -53,7 +53,7 @@ def check_measurement(scope, channel_map, trigger_check=0):
             return None
     return pd.DataFrame(data)
 
-def read_measurements(scope, max_meas=20, channel_map={'ch1':'x'}, rep_rate=1.3,
+def get_measurements(scope, max_meas=20, channel_map={'ch1':'x'}, rep_rate=1.3,
                       filename=None, average_only=True):
     '''Build list of dataframes containing data. When reading measurements,
     check that data changed before incrementing (do not think there is another  
