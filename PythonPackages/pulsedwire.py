@@ -280,7 +280,7 @@ def get_linear_calibration(file, plot=False, ax=None):
     
     return cals
 
-def get_measurement_amplitudes(measurement, annotate_plot=False, ref_magnet=True, return_means=False):
+def get_measurement_amplitudes(measurement, annotate_plot=False, ref_magnet=False, return_means=False):
     ''' Computes the relative amplitudes of the measurement. The input measurement
     must be a dataframe with columns 'time' and 'data'. It is changed during the 
     function so copies should be passed to avoid corruption. The annotate_plot

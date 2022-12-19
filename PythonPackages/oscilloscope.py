@@ -18,6 +18,7 @@ from pyvisa import ResourceManager
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
 
 class Scope():
@@ -31,31 +32,34 @@ class Scope():
         self.osc.timeout= 5000
         
         # Read waveform settings
-        self.udpate_wfm_settings()
+        # self.update_wfm_settings()
 
-    def update_wfm_settings(self):
-        ''' Return a pandas Series object containing waveform (wfm) settings '''
-        values = np.array([
-            self.osc.query_ascii_values('wfmoutpre:xinc?')[0],
-            self.osc.query_ascii_values('wfmoutpre:xzero?')[0],
-            self.osc.query_ascii_values('wfmoutpre:ymult?')[0],
-            self.osc.query_ascii_values('wfmoutpre:yoff?')[0],
-            self.osc.query_ascii_values('wfmoutpre:yzero?')[0],
-            self.osc.query_ascii_values('wfmoutpre:nr_pt?')[0]
-            ])
+    # def update_wfm_settings(self):
+    #     ''' Return a pandas Series object containing waveform (wfm) settings '''
+    #     values = np.array([
+    #         self.osc.query_ascii_values('wfmoutpre:xinc?')[0],
+    #         self.osc.query_ascii_values('wfmoutpre:xzero?')[0],
+    #         self.osc.query_ascii_values('wfmoutpre:ymult?')[0],
+    #         self.osc.query_ascii_values('wfmoutpre:yoff?')[0],
+    #         self.osc.query_ascii_values('wfmoutpre:yzero?')[0],
+    #         self.osc.query_ascii_values('wfmoutpre:nr_pt?')[0]
+    #         ])
     
-        names = ['xinc','xzero','ymult','yoff','yzero','points']
-        self.wfm = pd.Series(values, index=names)
-        return
+    #     names = ['xinc','xzero','ymult','yoff','yzero','points']
+    #     self.wfm = pd.Series(values, index=names)
+    #     return
         
-    def get_measurements(self, channel, shots=10, npoints=100000):
+    def get_measurements(self, channel, shots=10, npoints=100000, validate=True, 
+        update_zero=True):
         # Set Acquisition settings
         self.osc.write(f'data:source ch{channel}')
         self.osc.write('data:start 1')
         self.osc.write(f'data:stop 100000')
         self.osc.write('ACQuire:STOPAfter SEQuence')
         
-        for j in range(shots):
+        shot_data_volts = np.zeros((shots, npoints))
+        jshot = 0
+        while jshot<shots:
             # Arm acquisition
             self.osc.write('ACQ:STATE ON')
             
@@ -63,14 +67,69 @@ class Scope():
             while '1' in self.osc.query('BUSY?'):
                 time.sleep(.1)
             
-            # Query uint8 data (might need modulus 256)
-            uint8_data = self.osc.query_binary_values( 
+            # Query uint8 data
+            shot_data_int8 = self.osc.query_binary_values( 
                 'curve?', datatype='b', is_big_endian=True, container=np.array
-            )
-            
-            
-            
-            
+            )%256 - 128
+
+            # Waveform settings
+            xinc = self.osc.query_ascii_values('wfmoutpre:xinc?')[0]
+            xzero = self.osc.query_ascii_values('wfmoutpre:xzero?')[0]
+            ymult = self.osc.query_ascii_values('wfmoutpre:ymult?')[0]
+            yzero = self.osc.query_ascii_values('wfmoutpre:yzero?')[0]
+            shot_data_volts[jshot, :] = yzero + ymult*shot_data_int8
+
+            # Only move on to next shot if not input
+            if validate:
+                if input()=='':
+                    jshot += 1
+
+            # Change offset to center on previous data
+            if update_zero:
+                new_offset = yzero + ymult*shot_data_int8[:100].mean()
+                self.osc.write(f'ch{channel}:Offset {new_offset}')
+
+
+
+        # Convert to volts
+        self.data = shot_data_volts
+        self.time = xzero + xinc*np.arange(npoints)
+
+
+        # Set back to continuous acquisition
+        self.osc.write('ACQuire:STOPAfter Runstop')
+        self.osc.write('ACQ:STATE ON')
+
+
+
+    def save_measurements(self, filename, coord, smooth=False):
+        avg_data_volts = self.data.mean(axis=0)
+
+        # Optionally smooth (needs work to avoid edge effects)
+        if smooth:
+            N = 10
+            smooth_data_volts = np.convolve(avg_data_volts, np.ones(N)/N, 'same')
+        else:
+            smooth_data_volts = avg_data_volts
+
+        df = pd.DataFrame( 
+            np.vstack([self.time, smooth_data_volts]).T,
+            columns = ['time',coord]
+        )
+
+        # Create directory if necessary
+        directory = os.path.dirname(filename)
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+        df.to_csv(filename, index=False)
+        return
             
             
 
+
+
+
+
+
+
+# %%

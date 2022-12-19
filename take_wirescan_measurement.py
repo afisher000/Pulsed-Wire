@@ -4,31 +4,29 @@ Created on Sat May 21 11:39:45 2022
 
 @author: afish
 """
-
+# %%
 import sys
 sys.path.append('C:\\Users\\afish\\Documents\\GitHub\\Pulsed-Wire\\PythonPackages')
-import oscilloscope as osc
+from oscilloscope import Scope
 import pulsedwire as pwf
 import numpy as np
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+import pickle
 
-folder = '2022-09-02 (ytraj, xoffset)'
-file = 'undulator_preliminary_trajectory.csv'
+folder = '2022-09-02 (X Calibration)'
+file = 'file0.csv'
+filename = os.path.join(folder, file)
+coord = 'x'
+channel = 2
 
-# Take scope measurement
-params = {
-    'max_meas':20,
-    'channel_map':{'ch1':'x', 'ch2':'y'},
-    'filename':file #os.path.join(folder, file)
-    }
+scope = Scope()
+scope.get_measurements(channel=channel, shots=4, validate=True)
+scope.save_measurements(filename=filename, coord=coord)
 
-scope_id = 'USB0::0x699::0x408::C031986::INSTR'
-scope = osc.setup_scope(scope_id, npoints=100000)
-df = osc.get_measurements(scope, **params)
-df.plot(x='time', y='y')
-
+pickle.dump(scope.data, open('data.pkl', 'wb'))
+pickle.dump(scope.time, open('time.pkl', 'wb'))
 
 
 
@@ -42,3 +40,7 @@ df.plot(x='time', y='y')
     
 
 
+
+
+
+# %%
