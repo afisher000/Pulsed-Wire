@@ -8,25 +8,21 @@ Created on Mon Dec  5 12:19:29 2022
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle
+from scipy.signal import find_peaks, savgol_filter
+from pulsedwire_functions_edited import get_signal_means_and_amplitudes
+
+    
+shot_data = pickle.load(open('data.pkl', 'rb'))
+time = pickle.load(open('time.pkl', 'rb'))
+
+for j in range(shot_data.shape[0]):
+    signal = shot_data[j, :]
+    means, amps = get_signal_means_and_amplitudes(time, signal)
+    print(f'Shot {j}: \n\tMean = {means.mean():.2f}mV\n\tAmplitude = {amps.mean()*1000:.1f}mV')
 
 
-df = pd.read_csv('2022-09-02 (xtraj, yoffset).csv')
 
-pos0 = df[df.yoffset==0]
-neg500= df[df.yoffset==500]
-pos500 = df[df.yoffset==-500]
 
-fig, ax = plt.subplots()
-pos0.plot('time', 'x', ax=ax)
-neg500.plot('time','x', ax=ax)
-pos500.plot('time', 'x', ax=ax)
 
-df = pd.read_csv('2022-09-02 (ytraj, xoffset).csv')
-pos0 = df[df.xoffset==0]
-neg500= df[df.xoffset==500]
-pos500 = df[df.xoffset==-500]
 
-fig, ax = plt.subplots()
-pos0.plot('time', 'y', ax=ax)
-neg500.plot('time','y', ax=ax)
-pos500.plot('time', 'y', ax=ax)
