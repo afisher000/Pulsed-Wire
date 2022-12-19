@@ -26,7 +26,7 @@ class Scope():
 
         
     def get_measurements(self, channel, shots=10, npoints=100000, validate=True, 
-        update_zero=True):
+        update_zero=False):
         # Set Acquisition settings
         self.osc.write(f'data:source ch{channel}')
         self.osc.write('data:start 1')
@@ -57,8 +57,12 @@ class Scope():
 
             # Only move on to next shot if not input
             if validate:
-                if input()=='':
+                self.input = input('New Data:')
+                print(self.input)
+                if self.input=='':
                     jshot += 1
+                elif self.input=='q':
+                    jshot = shots #Break out of loop
 
             # Change offset to center on previous data
             if update_zero:
@@ -75,19 +79,12 @@ class Scope():
 
 
 
-    def save_measurements(self, filename, coord, smooth=False):
-        avg_data_volts = self.data.mean(axis=0)
-
-        # Optionally smooth (needs work to avoid edge effects)
-        if smooth:
-            N = 10
-            smooth_data_volts = np.convolve(avg_data_volts, np.ones(N)/N, 'same')
-        else:
-            smooth_data_volts = avg_data_volts
-
+    def save_measurements(self, filename):
+        columns = [f'col{j}' for j in range(self.data.shape[0])]
+        columns.insert(0, 'time')
         df = pd.DataFrame( 
-            np.vstack([self.time, smooth_data_volts]).T,
-            columns = ['time',coord]
+            np.vstack([self.time, self.data]).T,
+            columns = columns
         )
 
         # Create directory if necessary

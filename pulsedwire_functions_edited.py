@@ -25,9 +25,7 @@ def get_signal_means_and_amplitudes(time, signal):
     # Take numerical derivative, find peaks
     signal_derivative = np.append(0, np.diff(downsampled_signal))
     pk_idxs, _ = find_peaks(np.abs(signal_derivative), prominence = signal_derivative.max()*.5)
-    # plt.plot(downsampled_time, signal_derivative)
-    # plt.show()
-    
+
     # Find mean zero crossings of derivative between derivative peaks
     zero_idxs = []
     for j in range(len(pk_idxs)-1):
@@ -44,7 +42,6 @@ def get_signal_means_and_amplitudes(time, signal):
     pk_times = []
     pk_vals = []
     pk_errors = []
-    fig, ax = plt.subplots()
     for idx in zero_idxs:
         scn = np.arange(idx-10, idx+10)
         poly = np.polyfit(downsampled_time[scn], downsampled_signal[scn], 2)
@@ -69,7 +66,7 @@ def get_signal_means_and_amplitudes(time, signal):
     rel_amp_error = 3e-5*delta**4 + 1.27e-2*delta**2
     amps[1:-1] = amps[1:-1]*(1-rel_amp_error)
     
-    # Drop first and last values
+    # Drop first and last peak locations
     means = means[1:-1]
     amps = amps[1:-1]
     
