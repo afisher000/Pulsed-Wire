@@ -16,12 +16,16 @@ import os
 
 # Folder and file
 folder = 'Dec 19 - xtraj, yoffset'
-file = '(0,0).0.csv'
+file = '(0,750).0.csv'
 
 # Take measurements
 scope = Scope()
 scope.get_measurements(channel=2, shots=20, validate=True)
 scope.save_measurements(os.path.join(folder, file))
+
+
+
+
 
 
 

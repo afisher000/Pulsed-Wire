@@ -53,6 +53,9 @@ while scope.input != 'q':
     # Get next measurement
     get_measurement(scope)
 
+df = pd.DataFrame(np.vstack([avg_means, avg_amps]).T, columns=['voltage','amplitude'])
+df.to_csv('calibration.csv')
+
 
 
 
