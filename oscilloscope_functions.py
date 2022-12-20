@@ -58,7 +58,6 @@ class Scope():
             # Only move on to next shot if not input
             if validate:
                 self.input = input('New Data:')
-                print(self.input)
                 if self.input=='':
                     jshot += 1
                 elif self.input=='q':
