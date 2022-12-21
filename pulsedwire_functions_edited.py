@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 from scipy.signal import find_peaks, savgol_filter
+from scipy.fft import rfft, rfftfreq, irfft
 
     
 def get_signal_means_and_amplitudes(time, signal, plot_signal_peaks=False, plot_derivative_peaks=False):
@@ -93,3 +94,51 @@ def get_signal_means_and_amplitudes(time, signal, plot_signal_peaks=False, plot_
     amps = amps[1:-1]
     
     return means, amps
+
+def low_pass_filter(time, signal, cutoff):
+    yf = rfft(signal)
+    freq = rfftfreq(len(time), time[1]-time[0])
+    yf[freq>cutoff] = 0
+    filtered_signal = irfft(yf, len(time))
+
+    # Clip ends of filtered signal (show some anomaly)
+    window = len(time)//50
+    filtered_signal[:window] = filtered_signal[window]
+    filtered_signal[-window:] = filtered_signal[-window]
+
+    return filtered_signal
+
+def get_fourier_transform(time, signal, freq_range=None, reduce_fmax=1, 
+                          reduce_df=1):
+
+    # Pad/skip data to change frequency resolution (df separation)
+    pad_points = int((reduce_df-1)*len(signal)/2)
+    data_values = np.pad(signal, 
+                            (pad_points, pad_points),
+                            mode='edge')
+
+    # Reduce fmax to downsample and speed up computation
+    reduce_fmax = int(reduce_fmax)
+    downsampled_signal = data_values[::reduce_fmax]
+    downsampled_time = time[::reduce_fmax]-time[0]
+
+    # Take fourier transform
+    yf = rfft(downsampled_signal)
+    freq = rfftfreq(len(downsampled_signal), np.diff(downsampled_time).mean())
+
+    # Scale spectra by npoints and df
+    yf = yf/len(downsampled_signal)/np.diff(freq).mean()
+
+    # Shift to t=0
+    freq = np.real(freq)
+    amp = np.real(abs(yf))
+    phase = np.real(np.angle(yf))
+
+    # Truncate results to freq_range
+    if freq_range is not None:
+        scn = np.logical_and(freq>freq_range[0], freq<freq_range[1])
+        freq = freq[scn]
+        amp = amp[scn]
+        phase = phase[scn]
+
+    return freq, amp, phase

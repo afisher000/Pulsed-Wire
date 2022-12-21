@@ -10,12 +10,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 from scipy.signal import find_peaks, savgol_filter
-from pulsedwire_functions_edited import get_signal_means_and_amplitudes
+from pulsedwire_functions_edited import get_signal_means_and_amplitudes, low_pass_filter
 from oscilloscope_functions import Scope
-
+from time import sleep
 
 def get_measurement(scope):
-    scope.get_measurements(channel=2, shots=1, validate=True, update_zero=True)
+    scope.get_measurements(channel=2, shots=1, validate='clipping', update_zero=True)
 
 # Setup figure
 plt.ion()
@@ -28,14 +28,18 @@ get_measurement(scope)
 # Loop over measurements
 avg_means = []
 avg_amps = []
-while scope.input != 'q':
-    # Compute aggregate of next measurement
+while True:
+    # Average mean and amplitude
     time = scope.time
     signal = scope.data[0,:]
+
+    # Filter high frequency noise
+    filtered_signal = low_pass_filter(time, signal, 4e4)
+
     try:
-        means, amps = get_signal_means_and_amplitudes(time, signal)
+        means, amps = get_signal_means_and_amplitudes(time, filtered_signal)
     except:
-        print('Error! Go to larger amplitude...')
+        print('Error. Try increasing signal/noise ratio...')
         get_measurement(scope)
         continue
 
@@ -45,13 +49,19 @@ while scope.input != 'q':
     ax.clear()
     ax.scatter(avg_means, avg_amps)
     fig.canvas.draw_idle()
+    plt.pause(.05)
 
-    # Save data
-    pickle.dump(avg_means, open('means.pkl','wb'))
-    pickle.dump(avg_amps, open('amps.pkl', 'wb'))
+    # Save data every loop
+    df = pd.DataFrame(np.vstack([avg_means, avg_amps]).T, columns=['voltage','amplitude'])
+    df.to_csv('calibration.csv', index=False)
     
     # Get next measurement
     get_measurement(scope)
+
+
+# pickle.dump(avg_means, open('means.pkl','wb'))
+# pickle.dump(avg_amps, open('amps.pkl', 'wb'))
+
 
 
 
