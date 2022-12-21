@@ -12,7 +12,7 @@ import pickle
 from scipy.signal import find_peaks, savgol_filter
 
     
-def get_signal_means_and_amplitudes(time, signal):
+def get_signal_means_and_amplitudes(time, signal, plot_signal_peaks=False, plot_derivative_peaks=False):
     # Smooth with savgol filter
     smooth_signal = savgol_filter(signal, len(signal)//500+1, 3)
     
@@ -25,7 +25,22 @@ def get_signal_means_and_amplitudes(time, signal):
     # Take numerical derivative, find peaks
     signal_derivative = np.append(0, np.diff(downsampled_signal))
     pk_idxs, _ = find_peaks(np.abs(signal_derivative), prominence = signal_derivative.max()*.5)
-
+    
+    # Handle too few or too many peaks
+    if len(pk_idxs)<58:
+        raise ValueError('Threshold for finding derivative peaks might need decreased.')
+    elif len(pk_idxs)>58:
+        # print('Keeping the 58 largest peaks.')
+        pks = np.abs(signal_derivative[pk_idxs])
+        argsorting = np.argsort(pks)
+        pk_idxs = np.sort(pk_idxs[argsorting[-58:]])
+        
+    # Plot derivative peaks
+    if plot_derivative_peaks:
+        fig, ax = plt.subplots()
+        ax.plot(downsampled_time, signal_derivative)
+        ax.scatter(downsampled_time[pk_idxs], signal_derivative[pk_idxs], c='r')
+        
     # Find mean zero crossings of derivative between derivative peaks
     zero_idxs = []
     for j in range(len(pk_idxs)-1):
@@ -54,6 +69,13 @@ def get_signal_means_and_amplitudes(time, signal):
         pk_times.append(downsampled_time[scn[pk_idx]])
         pk_vals.append(signal_fit[pk_idx])
         pk_errors.append(signal_fit[pk_idx] - downsampled_signal[scn[pk_idx]])
+        
+    # Check peaks
+    if plot_signal_peaks:
+        fig, ax = plt.subplots()
+        ax.plot(downsampled_time, downsampled_signal)
+        ax.scatter(pk_times, pk_vals)
+        
     
     
     # Return amplitudes and means as computed from peaks

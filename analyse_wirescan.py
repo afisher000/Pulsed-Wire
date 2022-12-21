@@ -61,15 +61,16 @@ wirescan_df = wirescan_df.transpose().sort_index()
     
 
 def get_axis_fit(series):
+    peak = series.name
     poly = np.polyfit(series.index, series.values, 2)
     axis = -poly[1]/(2*poly[0])
     residuals = series.values - np.polyval(poly, series.index)
     rmse = np.sqrt(np.sum(residuals**2))
-    return axis, rmse
+    return peak, axis, rmse
     
-concavity_df = pd.DataFrame(columns=['peak','axis','rmse'])
-for col in wirescan_df.columns:
-    axis, rmse = get_axis_fit(wirescan_df[col])
-    concavity_df.loc[len(concavity_df)] = [col, axis, rmse]
-    
+concavity_df = wirescan_df.apply(get_axis_fit).transpose()
+concavity_df.columns = ['peak','axis','rmse']
+cmap = plt.get_cmap('coolwarm')
+concavity_df.plot.scatter('peak','axis', c='rmse', cmap=cmap)
+
 
