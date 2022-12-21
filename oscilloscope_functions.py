@@ -25,7 +25,7 @@ class Scope():
         self.osc.timeout= 5000
 
         
-    def get_measurements(self, channel, shots=10, npoints=100000, validate=True, 
+    def get_measurements(self, channel, shots=10, npoints=100000, validate='none', 
         update_zero=False):
         # Set Acquisition settings
         self.osc.write(f'data:source ch{channel}')
@@ -56,12 +56,19 @@ class Scope():
             shot_data_volts[jshot, :] = yzero + ymult*shot_data_int8
 
             # Only move on to next shot if not input
-            if validate:
+            if validate=='manual':
                 self.input = input('New Data:')
                 if self.input=='':
                     jshot += 1
                 elif self.input=='q':
                     jshot = shots #Break out of loop
+            elif validate=='clipping':
+                if np.max(abs(shot_data_int8))<127: #Not clipping
+                    jshot += 1
+                else:
+                    print('Shot clipped, trying again')
+
+
 
             # Change offset to center on previous data
             if update_zero:
