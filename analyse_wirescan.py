@@ -15,9 +15,11 @@ plt.close('all')
 archive_folder = 'C:\\Users\\afisher\\Documents\\Pulsed Wire Data Archive'
 
 # wirescan_folder = '2022-12-19 xtraj, yoffset'
-wirescan_folder = '2022-12-21 ytraj, xoffset'
+# wirescan_folder = '2022-12-21 ytraj, xoffset'
+wirescan_folder = '2022-12-21 xtraj, xoffset'
 
 folder = os.path.join(archive_folder, wirescan_folder)
+folder = wirescan_folder
 traj_coord = folder[folder.find('traj')-1]
 offset_coord = folder[folder.find('offset')-1]
 
@@ -118,7 +120,7 @@ def get_wire_adjustments(peaks, axis, weights, dz_p1_und = 41, dz_und_p2 = 12):
 concavity_df = wirescan_df.apply(get_axis_fit).transpose()
 concavity_df.columns = ['peak','axis','rmse']
 cmap = plt.get_cmap('coolwarm')
-concavity_df.plot.scatter('peak','axis', c='rmse', cmap=cmap)
+concavity_df.plot.scatter('peak','axis', c='rmse')
 
 # Get wire adjustments
 peaks = concavity_df.peak.values

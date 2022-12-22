@@ -36,13 +36,13 @@ class Scope():
         time = xzero + xinc*np.arange(npoints)
 
         # Query ch1 waveform
-        self.osc.write(f'data:source ch{channels.index("x")}')
+        self.osc.write(f'data:source ch{channels.index("x")+1}')
         x_int8 = self.osc.query_binary_values( 
             'curve?', datatype='b', is_big_endian=True, container=np.array
         )%256 - 128
 
         # Query ch2 waveform
-        self.osc.write(f'data:source ch{channels.index("y")}')
+        self.osc.write(f'data:source ch{channels.index("y")+1}')
         y_int8 = self.osc.query_binary_values( 
             'curve?', datatype='b', is_big_endian=True, container=np.array
         )%256 - 128
