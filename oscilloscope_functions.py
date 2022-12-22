@@ -48,12 +48,17 @@ class Scope():
         )%256 - 128
 
         # Plot
-        fig, ax = plt.subplots()
-        ax.plot(time, x_int8, label='x')
-        ax.plot(time, y_int8, label='y')
-        ax.legend()
-        ax.set_xlabel('Time (s)')
-        ax.set_ylabel('Volts')
+        fig, ax = plt.subplots(ncols=2, figsize=(10,5))
+        ax[0].plot(time, x_int8-x_int8[0])
+        ax[0].set_ylabel('Scope Divisions')
+        ax[0].set_title('X')
+        ax[0].set_xlabel('Time (s)')
+        ax[0].set_xlim([0, 0.006])
+        ax[1].plot(time, y_int8-y_int8[0])
+        ax[1].set_ylabel('Scope Divisions')
+        ax[1].set_xlabel('Time (s)')
+        ax[1].set_title('Y')
+        ax[1].set_xlim([-0.001, 0.005])
 
     def get_measurements(self, channel, shots=10, npoints=100000, validate='none', 
         update_zero=False):

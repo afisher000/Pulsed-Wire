@@ -12,7 +12,6 @@ import pickle
 from scipy.signal import find_peaks, savgol_filter
 from pulsedwire_functions_edited import get_signal_means_and_amplitudes, low_pass_filter
 from oscilloscope_functions import Scope
-from time import sleep
 
 def get_measurement(scope):
     scope.get_measurements(channel=2, shots=1, validate='clipping', update_zero=True)
@@ -54,13 +53,16 @@ while True:
     # Save data every loop
     df = pd.DataFrame(np.vstack([avg_means, avg_amps]).T, columns=['voltage','amplitude'])
     df.to_csv('calibration.csv', index=False)
-    
+
     # Get next measurement
     get_measurement(scope)
 
 
-# pickle.dump(avg_means, open('means.pkl','wb'))
-# pickle.dump(avg_amps, open('amps.pkl', 'wb'))
+def clean_calibration_data():
+    df = pd.read_csv('calibration.csv')
+    df = df[df.amplitude>df.amplitude.max()*.7]
+    df.to_csv('calibration.csv')
+    return
 
 
 

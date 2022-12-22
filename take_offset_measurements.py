@@ -15,8 +15,8 @@ from oscilloscope_functions import Scope
 import os
 
 # Folder and file
-folder = '2022-12-21 xtraj, xoffset'
-file = '(-500,0).0.csv'
+folder = '2022-12-22 xtraj, yoffset'
+file = '(500,0).0.csv'
 
 # 
 filename = os.path.join(folder, file)
@@ -24,9 +24,6 @@ filename = os.path.join(folder, file)
 scope = Scope()
 scope.get_measurements(channel=2, shots=20, validate='manual')
 scope.save_measurements(filename)
-
-
-
 
 
 

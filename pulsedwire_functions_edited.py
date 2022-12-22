@@ -31,7 +31,7 @@ def get_signal_means_and_amplitudes(time, signal, plot_signal_peaks=False, plot_
     if len(pk_idxs)<58:
         raise ValueError('Threshold for finding derivative peaks might need decreased.')
     elif len(pk_idxs)>58:
-        # print('Keeping the 58 largest peaks.')
+        print('Keeping the 58 largest peaks.')
         pks = np.abs(signal_derivative[pk_idxs])
         argsorting = np.argsort(pks)
         pk_idxs = np.sort(pk_idxs[argsorting[-58:]])
