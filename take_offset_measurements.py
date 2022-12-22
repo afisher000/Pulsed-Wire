@@ -15,15 +15,16 @@ from oscilloscope_functions import Scope
 import os
 
 # Folder and file
-folder = 'Dec 19 - xtraj, yoffset'
-file = '(0,500).0.csv'
+folder = 'Dec 21 - ytraj, xoffset'
+file = '(500,0).0.csv'
 
 # 
 filename = os.path.join(folder, file)
 # Take measurements
 scope = Scope()
-scope.get_measurements(channel=2, shots=20, validate=True)
+scope.get_measurements(channel=2, shots=20, validate='manual')
 scope.save_measurements(filename)
+
 
 
 

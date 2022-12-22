@@ -4,6 +4,7 @@ Created on Mon Dec 19 15:26:55 2022
 
 @author: afisher
 """
+# %%
 import os
 import pandas as pd
 import numpy as np
@@ -130,3 +131,5 @@ get_wire_adjustments(peaks, axis, weights)
 
 
 
+
+# %%

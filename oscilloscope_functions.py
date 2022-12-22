@@ -24,7 +24,37 @@ class Scope():
         self.osc = rm.open_resource(scope_id)
         self.osc.timeout= 5000
 
-        
+
+    def print_waveforms(self, npoints=100000, channels=['x','y']):
+        #
+        self.osc.write('data:start 1')
+        self.osc.write(f'data:stop {npoints}')
+
+        # Get temporal vector
+        xinc = self.osc.query_ascii_values('wfmoutpre:xinc?')[0]
+        xzero = self.osc.query_ascii_values('wfmoutpre:xzero?')[0]
+        time = xzero + xinc*np.arange(npoints)
+
+        # Query ch1 waveform
+        self.osc.write(f'data:source ch{channels.index("x")}')
+        x_int8 = self.osc.query_binary_values( 
+            'curve?', datatype='b', is_big_endian=True, container=np.array
+        )%256 - 128
+
+        # Query ch2 waveform
+        self.osc.write(f'data:source ch{channels.index("y")}')
+        y_int8 = self.osc.query_binary_values( 
+            'curve?', datatype='b', is_big_endian=True, container=np.array
+        )%256 - 128
+
+        # Plot
+        fig, ax = plt.subplots()
+        ax.plot(time, x_int8, label='x')
+        ax.plot(time, y_int8, label='y')
+        ax.legend()
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Volts')
+
     def get_measurements(self, channel, shots=10, npoints=100000, validate='none', 
         update_zero=False):
         # Set Acquisition settings
