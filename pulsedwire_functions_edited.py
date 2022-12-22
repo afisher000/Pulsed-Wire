@@ -52,6 +52,7 @@ def get_signal_means_and_amplitudes(time, signal, plot_signal_peaks=False, plot_
             sign*signal_derivative[scn+1]<=0
         ).nonzero()[0].mean()
         zero_idxs.append(scn[int(zero_idx)])
+
     
     
     # Search for signal peaks around derivative zero_crossings

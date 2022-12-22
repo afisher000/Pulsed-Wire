@@ -8,18 +8,29 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from pulsedwire_functions_edited import get_signal_means_and_amplitudes
+from pulsedwire_functions_edited import get_signal_means_and_amplitudes, low_pass_filter
 import seaborn as sns
+plt.close('all')
+archive_folder = 'C:\\Users\\afisher\\Documents\\Pulsed Wire Data Archive'
 
-folder = 'C:\\Users\\afisher\\Documents\\Pulsed Wire Data Archive\\2022-12-19 xtraj, yoffset (2)'
+# wirescan_folder = '2022-12-19 xtraj, yoffset'
+wirescan_folder = '2022-12-21 ytraj, xoffset'
 
+folder = os.path.join(archive_folder, wirescan_folder)
 traj_coord = folder[folder.find('traj')-1]
-offset_coord = folder[folder.find('offset')-1] + 'offset'
+offset_coord = folder[folder.find('offset')-1]
 
 # Get quartic fit of calibration curve
 calibration = pd.read_csv(os.path.join(folder, 'calibration.csv'))
 calibration = calibration.sort_values(by='voltage')
 cal_poly = np.polyfit(calibration.voltage, calibration.amplitude, 4)
+
+fig, ax = plt.subplots()
+ax.scatter(calibration.voltage, calibration.amplitude, label='data')
+ax.plot(calibration.voltage, np.polyval(cal_poly, calibration.voltage), label='Quartic Fit')
+ax.set_ylabel('Amplitude (mV)')
+ax.set_xlabel('Voltage (mV)')
+ax.legend()
 
 wirescan_df = pd.DataFrame()
 # Loop over datasets in folder
@@ -44,6 +55,8 @@ for file in os.listdir(folder):
         col = f'col{j}'
         time = dataset.time.values
         signal = dataset[col].values
+        
+        signal = low_pass_filter(time, signal, 4e4)
         means, amps = get_signal_means_and_amplitudes(time, signal, plot_signal_peaks=False, plot_derivative_peaks=False)
         mean_df[col] = means
         amp_df[col] = amps
@@ -60,6 +73,15 @@ for file in os.listdir(folder):
 wirescan_df = wirescan_df.transpose().sort_index()
     
 
+def plot_wirescan_concavity(wirescan_df, peak_range=[0,5]):
+    fig, ax = plt.subplots()
+    min_peak = peak_range[0]
+    max_peak = peak_range[1]
+    wirescan_df.iloc[:,min_peak:max_peak].plot(ax=ax)
+    ax.set_xlabel('Offset (um)')
+    ax.set_ylabel('Amplitude (mV)')
+    
+
 def get_axis_fit(series):
     peak = series.name
     poly = np.polyfit(series.index, series.values, 2)
@@ -68,9 +90,43 @@ def get_axis_fit(series):
     rmse = np.sqrt(np.sum(residuals**2))
     return peak, axis, rmse
     
+def get_wire_adjustments(peaks, axis, weights, dz_p1_und = 41, dz_und_p2 = 12):
+    dz_p1_und = 41 #inches
+    dz_und_p2 = 12 #inches
+    und_L = 39 #inches
+    
+    # Center on undulator
+    zp1 = (-und_L/2 - dz_p1_und)*25400 #um
+    zp2 = (und_L/2 + dz_und_p2)*25400 #um
+    peaks_um = 32000/2*(peaks-peaks.mean())
+    poly = np.polyfit(peaks_um, axis, 1, w=weights)
+    
+    # Compute and print adjustments
+    p1_adjust = round(np.polyval(poly, zp1), -1) #nearest 10um
+    p2_adjust = round(np.polyval(poly, zp2), -1) #nearest 10um
+    print(f'P1 Adjustment: {p1_adjust}um')
+    print(f'P2 Adjustment: {p2_adjust}um')
+    
+    fig, ax = plt.subplots()
+    cmap = plt.get_cmap('coolwarm')
+    ax.scatter(peaks_um, axis, c=weights, cmap=cmap)
+    ax.plot(peaks_um, np.polyval(poly, peaks_um))
+    return p1_adjust, p2_adjust
+    
+    
 concavity_df = wirescan_df.apply(get_axis_fit).transpose()
 concavity_df.columns = ['peak','axis','rmse']
 cmap = plt.get_cmap('coolwarm')
 concavity_df.plot.scatter('peak','axis', c='rmse', cmap=cmap)
+
+# Get wire adjustments
+peaks = concavity_df.peak.values
+axis = concavity_df.axis.values
+weights = 1/concavity_df.rmse.values
+get_wire_adjustments(peaks, axis, weights)
+
+
+
+
 
 
