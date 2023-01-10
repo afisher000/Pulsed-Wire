@@ -14,7 +14,7 @@ from pulsedwire_functions_edited import get_signal_means_and_amplitudes, low_pas
 from oscilloscope_functions import Scope
 
 def get_measurement(scope):
-    scope.get_measurements(channel=2, shots=1, validate='clipping', update_zero=True)
+    scope.get_measurements(channel=1, shots=1, validate='clipping', update_zero=True)
 
 # Setup figure
 plt.ion()

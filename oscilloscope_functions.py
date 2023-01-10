@@ -53,12 +53,21 @@ class Scope():
         ax[0].set_ylabel('Scope Divisions')
         ax[0].set_title('X')
         ax[0].set_xlabel('Time (s)')
-        ax[0].set_xlim([0, 0.006])
+        # ax[0].set_xlim([0, 0.006])
         ax[1].plot(time, y_int8-y_int8[0])
         ax[1].set_ylabel('Scope Divisions')
         ax[1].set_xlabel('Time (s)')
         ax[1].set_title('Y')
-        ax[1].set_xlim([-0.001, 0.005])
+        # ax[1].set_xlim([-0.001, 0.005])
+        ax[0].set_ylim([-128, 128])
+        ax[1].set_ylim([-128, 128])
+
+    def get_waveform_settings(self):
+            xinc = self.osc.query_ascii_values('wfmoutpre:xinc?')[0]
+            xzero = self.osc.query_ascii_values('wfmoutpre:xzero?')[0]
+            ymult = self.osc.query_ascii_values('wfmoutpre:ymult?')[0]
+            yzero = self.osc.query_ascii_values('wfmoutpre:yzero?')[0]
+            return xinc, xzero, ymult, yzero
 
     def get_measurements(self, channel, shots=10, npoints=100000, validate='none', 
         update_zero=False):
@@ -84,10 +93,7 @@ class Scope():
             )%256 - 128
 
             # Convert to volts
-            xinc = self.osc.query_ascii_values('wfmoutpre:xinc?')[0]
-            xzero = self.osc.query_ascii_values('wfmoutpre:xzero?')[0]
-            ymult = self.osc.query_ascii_values('wfmoutpre:ymult?')[0]
-            yzero = self.osc.query_ascii_values('wfmoutpre:yzero?')[0]
+            xinc, xzero, ymult, yzero = self.get_waveform_settings()
             shot_data_volts[jshot, :] = yzero + ymult*shot_data_int8
 
             # Only move on to next shot if not input
@@ -100,8 +106,12 @@ class Scope():
             elif validate=='clipping':
                 if np.max(abs(shot_data_int8))<127: #Not clipping
                     jshot += 1
+                    print(f'{jshot} of {shots}')
                 else:
                     print('Shot clipped, trying again')
+            else:
+                jshot += 1
+                print(f'{jshot} of {shots}')
 
 
 
