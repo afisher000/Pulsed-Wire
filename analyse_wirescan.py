@@ -9,7 +9,7 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from pulsedwire_functions_edited import get_signal_means_and_amplitudes, low_pass_filter
+from utils_pulsedwire_edited import get_signal_means_and_amplitudes, low_pass_filter
 import seaborn as sns
 plt.close('all')
 archive_folder = 'C:\\Users\\afisher\\Documents\\Pulsed Wire Data Archive\\THESEUS 1 PulsedWire Data'
@@ -18,11 +18,17 @@ archive_folder = 'C:\\Users\\afisher\\Documents\\Pulsed Wire Data Archive\\THESE
 # wirescan_folder = '2022-12-19 xtraj, yoffset'
 # wirescan_folder = '2022-12-21 ytraj, xoffset'
 # wirescan_folder = '2022-12-21 xtraj, xoffset'
+<<<<<<< Updated upstream
 # wirescan_folder = '2022-12-28 xtraj, yoffset'
 wirescan_folder = '2022-12-28 ytraj, xoffset'
 
 folder = os.path.join(archive_folder, wirescan_folder)
 # folder = wirescan_folder
+=======
+wirescan_folder = '2022-12-22 xtraj, yoffset'
+
+folder = os.path.join(archive_folder, wirescan_folder)
+>>>>>>> Stashed changes
 traj_coord = folder[folder.find('traj')-1]
 offset_coord = folder[folder.find('offset')-1]
 
@@ -52,7 +58,6 @@ for file in os.listdir(folder):
     else:
         offset = int(file[file.find(',')+1:file.find(')')])
         
-    
     # Compute mean and amplitudes from dataset
     dataset = pd.read_csv(os.path.join(folder, file))
     mean_df = pd.DataFrame(columns = dataset.columns).drop(columns=['time'])
@@ -63,7 +68,7 @@ for file in os.listdir(folder):
         signal = dataset[col].values
         
         signal = low_pass_filter(time, signal, 4e4)
-        means, amps = get_signal_means_and_amplitudes(time, signal, plot_signal_peaks=False, plot_derivative_peaks=False)
+        means, amps = get_signal_means_and_amplitudes(time, signal, plot_signal_peaks=(offset==0), plot_derivative_peaks=False)
         mean_df[col] = means
         amp_df[col] = amps
     
@@ -72,7 +77,7 @@ for file in os.listdir(folder):
     # amp_df['avg'] = amp_df.mean(axis=1)
     # amp_df['stdev'] = amp_df.std(axis=1)
     # amp_df['rel_stdev'] = amp_df.stdev/amp_df.avg
-
+    print(f'Mean Voltage: {mean_df.mean().mean()}')
     # Add avg to wirescan_df
     wirescan_df[offset] = amp_df.mean(axis=1)
     
@@ -123,7 +128,7 @@ def get_wire_adjustments(peaks, axis, weights, dz_p1_und = 41, dz_und_p2 = 12):
 concavity_df = wirescan_df.apply(get_axis_fit).transpose()
 concavity_df.columns = ['peak','axis','rmse']
 cmap = plt.get_cmap('coolwarm')
-concavity_df.plot.scatter('peak','axis', c='rmse')
+concavity_df.plot.scatter('peak','axis', c='rmse', cmap=cmap)
 
 # Get wire adjustments
 peaks = concavity_df.peak.values

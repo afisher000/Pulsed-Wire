@@ -10,8 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 from scipy.signal import find_peaks, savgol_filter
-from pulsedwire_functions_edited import get_signal_means_and_amplitudes
-from oscilloscope_functions import Scope
+from utils_pulsedwire_edited import get_signal_means_and_amplitudes
+from utils_oscilloscope import Scope
 import os
 
 # Folder and file

@@ -9,29 +9,70 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from pulsedwire_functions_edited import get_signal_means_and_amplitudes
-from oscilloscope_functions import Scope
+from utils_pulsedwire_edited import get_signal_means_and_amplitudes
+from utils_oscilloscope import Scope
 import seaborn as sns
+plt.close('all')
 
-df = pd.read_csv('deduce_kick_in_velocity.csv')
-time = df.time.values
-up500 = df.up500.values
-down1000 = df.down1000.values
-_, amps_up = get_signal_means_and_amplitudes(time, up500, plot_derivative_peaks =False)
-_, amps_down = get_signal_means_and_amplitudes(time, down1000)
+def get_field_areas(m, orig_field):
+    field = orig_field[(m>20)&(m<90)]
+    x = np.cumsum(field)
+    zc = np.where(np.sign(field[:-1])!=np.sign(field[1:]))[0]
+    areas = np.diff(x[zc])
+    return areas
 
-#
-t0 = 4e-3
-dt = 5e-4
+data0 = pd.read_csv('hall_probe_fields_scan0.csv') # Rescan, no changes, before moving T80, straight traj
+data1 = pd.read_csv('hall_probe_fields_scan1.csv') # Make 5 adjust, before moving T80, straight traj
+data2 = pd.read_csv('hall_probe_fields_kick_at_80.csv') # After moving T80, kick down
+data3 = pd.read_csv('hall_probe_fields_kick_at_77.csv') # After moving T80, kick up
 
-# Scale to same vertical
-up500_scaled = up500
-down1000_scaled = down1000 * amps_up.mean()/amps_down.mean()
-peaks = np.arange(len(amps_down))
+# Computations
+m = data0.m.values
+datas = [data0, data1, data2, data3]
+fields = [data.By.values for data in datas]
+Bsquareds = [data.Bx.values**2 + data.By.values**2 for data in datas]
 
-difference = up500_scaled-up500_scaled.mean() - (down1000_scaled-down1000_scaled.mean())
-plt.plot(time, difference)
+areas = np.array([get_field_areas(m, field) for field in fields])
+norm_areas = areas/np.abs(areas).mean(axis=0)
+shifted_areas = norm_areas - np.sign(norm_areas)
 
-plt.xlim([t0-dt, t0+dt])
-plt.show()
-# %%
+
+
+
+# # Field comparison
+# fig, ax = plt.subplots()
+# ax.plot(m, fields[0], label='0')
+# ax.plot(m, fields[1], label='1')
+# ax.plot(m, fields[2], label='2')
+# ax.plot(m, fields[3], label='3')
+# ax.legend()
+# ax.set_xlim([70, 85])
+# ax.set_ylabel('fields')
+# ax.set_xlabel('Magnet number')
+
+# # BSquared
+# fig, ax = plt.subplots()
+# ax.plot(m, Bsquareds[2], label='2')
+# ax.plot(m, Bsquareds[3], label='3')
+# ax.legend()
+# ax.set_xlim([70, 85])
+# ax.set_ylabel('Bx^2 + By^2')
+# ax.set_xlabel('Magnet Number')
+
+
+# # Areas
+fig, ax = plt.subplots()
+m_areas = np.arange(22, 90, 2)
+ax.scatter(m_areas, shifted_areas[0], label='0')
+ax.scatter(m_areas, shifted_areas[1], label='1')
+# ax.scatter(m_areas, shifted_areas[2], label='2')
+# ax.scatter(m_areas, shifted_areas[3], label='3')
+# ax.scatter(m_areas, shifted_areas[1]-shifted_areas[0])
+# ax.scatter(m_areas, shifted_areas[3]-shifted_areas[2])
+ax.legend()
+ax.set_xlabel('Magnet Number')
+ax.set_ylabel('Area between zeros')
+
+
+
+
