@@ -12,17 +12,17 @@ import matplotlib.pyplot as plt
 from pulsedwire_functions_edited import get_signal_means_and_amplitudes, low_pass_filter
 import seaborn as sns
 plt.close('all')
-archive_folder = 'C:\\Users\\afisher\\Documents\\Pulsed Wire Data Archive'
-archive_folder = ''
+archive_folder = 'C:\\Users\\afisher\\Documents\\Pulsed Wire Data Archive\\THESEUS 1 PulsedWire Data'
+# archive_folder = ''
 
 # wirescan_folder = '2022-12-19 xtraj, yoffset'
 # wirescan_folder = '2022-12-21 ytraj, xoffset'
 # wirescan_folder = '2022-12-21 xtraj, xoffset'
-wirescan_folder = '2022-12-28 xtraj, yoffset'
-# wirescan_folder = '2022-12-28 ytraj, xoffset'
+# wirescan_folder = '2022-12-28 xtraj, yoffset'
+wirescan_folder = '2022-12-28 ytraj, xoffset'
 
 folder = os.path.join(archive_folder, wirescan_folder)
-folder = wirescan_folder
+# folder = wirescan_folder
 traj_coord = folder[folder.find('traj')-1]
 offset_coord = folder[folder.find('offset')-1]
 
