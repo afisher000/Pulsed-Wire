@@ -15,18 +15,20 @@ from utils_oscilloscope import Scope
 import os
 
 # Folder and file
-folder = 'Breaksection Alignment'
-file = 'aligned_0.csv'
+folder = '2023-01-20 ytraj, xoffset'
+file = '(500,0).1.csv'
 
 # 
 filename = os.path.join(folder, file)
 # Take measurements
 scope = Scope()
-# scope.get_measurements(channel=1, shots=30, validate='manual', update_zero=False)
+scope.get_measurements(channel=2, shots=30, validate='manual', update_zero=False)
 # scope.get_measurements(channel=1, shots=30, validate='none', update_zero=False)
-# scope.save_measurements(filename)
+# scope.get_measurements(channel=1, shots=1, npoints=10000)
+scope.save_measurements(filename)
 
-scope.print_waveforms(channels=['x','y'])
+# scope.print_waveforms(channels=['x','y'], npoints=10000, filename = filename)
+
 
 
 

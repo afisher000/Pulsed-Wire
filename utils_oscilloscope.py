@@ -25,7 +25,7 @@ class Scope():
         self.osc.timeout= 5000
 
 
-    def print_waveforms(self, npoints=100000, channels=['x','y']):
+    def print_waveforms(self, npoints=100000, channels=['x','y'], filename=None):
         #
         self.osc.write('data:start 1')
         self.osc.write(f'data:stop {npoints}')
@@ -47,6 +47,7 @@ class Scope():
             'curve?', datatype='b', is_big_endian=True, container=np.array
         )%256 - 128
 
+
         # Plot
         fig, ax = plt.subplots(ncols=2, figsize=(10,5))
         ax[0].plot(time, x_int8-x_int8[0])
@@ -62,6 +63,19 @@ class Scope():
         ax[0].set_ylim([-128, 128])
         ax[1].set_ylim([-128, 128])
 
+        if filename is not None:
+            df = pd.DataFrame( 
+            np.vstack([time, x_int8, y_int8]).T,
+            columns = ['time','x','y']
+        )
+
+        # Create directory if necessary
+        directory = os.path.dirname(filename)
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+        df.to_csv(filename, index=False)
+        return
+
     def get_waveform_settings(self):
             xinc = self.osc.query_ascii_values('wfmoutpre:xinc?')[0]
             xzero = self.osc.query_ascii_values('wfmoutpre:xzero?')[0]
@@ -73,7 +87,7 @@ class Scope():
         update_zero=False):
         # Set Acquisition settings
         self.osc.write(f'data:source ch{channel}')
-        self.osc.write('data:start 1')
+        self.osc.write(f'data:start 1')
         self.osc.write(f'data:stop 100000')
         self.osc.write('ACQuire:STOPAfter SEQuence')
         

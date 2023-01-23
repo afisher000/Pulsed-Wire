@@ -12,9 +12,9 @@ import pickle
 from scipy.signal import find_peaks, savgol_filter
 from utils_pulsedwire_edited import get_signal_means_and_amplitudes, low_pass_filter
 from utils_oscilloscope import Scope
-
+from time import sleep
 def get_measurement(scope):
-    scope.get_measurements(channel=1, shots=1, validate='clipping', update_zero=True)
+    scope.get_measurements(channel=2, shots=1, validate='manual', update_zero=True)
 
 # Setup figure
 plt.ion()
@@ -33,7 +33,7 @@ while True:
     signal = scope.data[0,:]
 
     # Filter high frequency noise
-    filtered_signal = low_pass_filter(time, signal, 4e4)
+    filtered_signal = low_pass_filter(time, signal, 4e4, 1e3)
 
     try:
         means, amps = get_signal_means_and_amplitudes(time, filtered_signal)
