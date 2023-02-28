@@ -12,8 +12,22 @@ import pickle
 from scipy.signal import find_peaks, savgol_filter
 from scipy.fft import rfft, rfftfreq, irfft
 
-    
+
+def read_hallprobe_field(path, field_flag):
+    hallprobe = pd.read_csv(path)
+    hallprobe['field'] = hallprobe[field_flag]
+    return hallprobe[['z','field']]
+
+def read_and_average_pulsedwire_measurement(path):
+    pulsedwire = pd.read_csv(path)
+    pulsedwire['trajectory'] = pulsedwire.drop(columns=['time']).mean(axis=1)
+    return pulsedwire[['time','trajectory']]
+
 def get_signal_means_and_amplitudes(time, signal, plot_signal_peaks=False, plot_derivative_peaks=False, return_peaks=False):
+    # If inputs from pandas object, get values
+    time = time.values if hasattr(time, 'values') else time
+    signal = signal.values if hasattr(signal, 'values') else signal
+    
     # Smooth with savgol filter
     smooth_signal = savgol_filter(signal, len(signal)//500+1, 3)
     
@@ -129,13 +143,19 @@ def get_fourier_transform(time, signal, freq_range=None, reduce_fmax=1,
                           reduce_df=1):
 
     # Pad/skip data to change frequency resolution (df separation)
-    pad_points = int((reduce_df-1)*len(signal)/2)
-    data_values = np.pad(signal, (pad_points, pad_points), mode='edge')
-
+    reduce_df = int(reduce_df)
+    pad_points = int((reduce_df-1)/2*len(signal))
+    pad_time = (reduce_df-1)/2*(time[-1]-time[0])
+    padded_time = np.pad(time, pad_points, mode='linear_ramp', 
+                         end_values=[time[0]-pad_time, time[-1]+pad_time]
+    )
+    padded_signal = np.pad(signal, pad_points, mode='edge')
+    
+    
     # Reduce fmax to downsample and speed up computation
     reduce_fmax = int(reduce_fmax)
-    downsampled_signal = data_values[::reduce_fmax]
-    downsampled_time = time[::reduce_fmax]-time[0]
+    downsampled_signal = padded_signal[::reduce_fmax]
+    downsampled_time = padded_time[::reduce_fmax]
 
     # Take fourier transform
     yf = rfft(downsampled_signal)
@@ -153,51 +173,55 @@ def get_fourier_transform(time, signal, freq_range=None, reduce_fmax=1,
         yf = yf[scn]
 
 
-    return freq, yf
+    return freq, yf, downsampled_time
 
-def correct_dispersion(time, signal, c0=207, EIwT = 2*6.4e-8, reduce_dt=10, reduce_fmax=20):
-    freq, yf = get_fourier_transform(time, signal, reduce_fmax=reduce_fmax)
-    # Take fourier transform, computer over values
-    # freq = rfftfreq(len(time), time[1]-time[0])
-    # yf = rfft(signal)
+def correct_dispersion(time, signal, c0=250, EIwT = 6.4e-8, reduce_dt=5, reduce_fmax=5, reduce_df=2):
     
+    time = time.values if hasattr(time, 'values') else time
+    signal = signal.values if hasattr(signal, 'values') else signal
+        
+    freq, yf, downsampled_time = get_fourier_transform(time, signal, reduce_fmax=reduce_fmax, reduce_df=reduce_df)
+
     # Compute frequency domain variables
     omega = 2*np.pi*freq
     if EIwT==0:
         k = omega/c0
     else:
+        # Solved w=c(k)*k for k
         k = np.sqrt( np.sqrt(omega**2/c0**2/EIwT + 1/4/EIwT**2) - 1/2/EIwT)
     speed = c0*np.sqrt(1+EIwT*k**2)
     
     # Apply dispersion correction
     Fk = (speed/c0)**3 + EIwT * k**2 * speed/c0
-    yf0 = (yf*Fk*np.exp(-1j*omega*time[0])).reshape((-1,1)) 
+    yf0 = (yf*Fk*np.exp(-1j*omega*downsampled_time[0])).reshape((-1,1)) 
     k0 = k
     dk0 = np.diff(k0, append=k0[-1]).reshape((-1,1))
 
-    
+
     # Get signal by manual integration (k0 not unequally spaced)
     corrected_time = time[::reduce_dt]
     matrix = yf0 * np.exp(1j*np.outer(c0*k0, corrected_time)) * c0 * dk0/(2*np.pi)
     corrected_signal = (np.sum(matrix, axis=0) - 0.5*matrix[0,:]).real*2
     
-    
     return corrected_time, corrected_signal
 
-def get_velocity_from_trajectory(time, signal, fix_dispersion=False, c0=207, EIwT=2*6.4e-8):
-    if fix_dispersion:
-        time, signal = correct_dispersion(time, signal, c0=c0, EIwT=EIwT)
-        
-    trajectory = low_pass_filter(time, signal, 2e4, 1e3)
+
+def get_numerical_derivative(time, signal, filtertype='none', savgol_window=101, lowpass_cutoff = 2e4):
+    # If inputs from pandas object, get values
+    time = time.values if hasattr(time, 'values') else time
+    signal = signal.values if hasattr(signal, 'values') else signal
     
-    # Get velocity
-    velocity = np.diff(trajectory, prepend=trajectory[0])
-    filtered_velocity = low_pass_filter(time, velocity, 2e4, 1e3)
-    return filtered_velocity
+    # Smooth inputs
+    if filtertype=='savgol':
+        signal = savgol_filter(signal, savgol_window, 5)
+    elif filtertype=='lowpass':
+        signal = low_pass_filter(time, signal, lowpass_cutoff, lowpass_cutoff/20)
     
-def get_field_from_trajectory(time, signal, fix_dispersion=False, c0=207, EIwT = 2*6.4e-8):
-    filtered_velocity = get_velocity_from_trajectory(
-        time, signal, fix_dispersion=fix_dispersion, c0=c0, EIwT=EIwT
-    )
-    field = np.diff(filtered_velocity, prepend=filtered_velocity[0])
-    return time, field
+    diff_signal = np.diff(signal, prepend=signal[0])
+    
+    # Smooth output
+    if filtertype=='savgol':
+        diff_signal = savgol_filter(diff_signal, savgol_window, 5)
+    elif filtertype=='lowpass':
+        diff_signal = low_pass_filter(time, diff_signal, lowpass_cutoff, lowpass_cutoff/20)
+    return diff_signal
