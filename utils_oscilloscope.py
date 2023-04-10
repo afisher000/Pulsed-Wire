@@ -17,8 +17,9 @@ import os
 class Scope():
     def __init__(self, scope_id=None):
         if scope_id is None:
-            scope_id = 'USB::0x0699::0x0412::C024123::INSTR'
-
+            # scope_id = 'USB::0x0AAD::0x0197::1329.7002k44-335071::INSTR'
+            # scope_id = 'USB::0x0699::0x0412::C024123::INSTR'
+            scope_id = 'USB0::0x0699::0x0410::C011465::INSTR' #Colts oscilloscope
         # Setup scope
         rm = ResourceManager()
         self.osc = rm.open_resource(scope_id)
@@ -39,13 +40,13 @@ class Scope():
         self.osc.write(f'data:source ch{channels.index("x")+1}')
         x_int8 = self.osc.query_binary_values( 
             'curve?', datatype='b', is_big_endian=True, container=np.array
-        )%256 - 128
+        )#%256 - 128
 
         # Query ch2 waveform
         self.osc.write(f'data:source ch{channels.index("y")+1}')
         y_int8 = self.osc.query_binary_values( 
             'curve?', datatype='b', is_big_endian=True, container=np.array
-        )%256 - 128
+        )#%256 - 128
 
 
         # Plot
@@ -104,7 +105,9 @@ class Scope():
             # Query uint8 data
             shot_data_int8 = self.osc.query_binary_values( 
                 'curve?', datatype='b', is_big_endian=True, container=np.array
-            )%256 - 128
+            )#%256 - 128
+            #print(max(shot_data_int8))
+            #print(min(shot_data_int8))
 
             # Convert to volts
             xinc, xzero, ymult, yzero = self.get_waveform_settings()

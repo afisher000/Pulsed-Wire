@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 from scipy.signal import find_peaks, savgol_filter
-from utils_pulsedwire_edited import get_signal_means_and_amplitudes, low_pass_filter
+from utils_pulsedwire import get_signal_means_and_amplitudes, low_pass_filter
 from utils_oscilloscope import Scope
 from time import sleep
 def get_measurement(scope):

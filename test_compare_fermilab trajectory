@@ -1,0 +1,45 @@
+# %%
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import pickle
+from scipy.signal import find_peaks, savgol_filter
+from utils_pulsedwire import get_signal_means_and_amplitudes
+from utils_oscilloscope import Scope
+import os
+
+folder = 'C:\\Users\\afish\\Documents\\Fermilab Measurements\\Theseus 2'
+fermi_filename = 'ytraj clean.csv'
+ucla_filename = 'UCLA final trajectory waveforms.csv'
+ucla_coord = 'y'
+
+
+ucla = pd.read_csv(os.path.join(folder, ucla_filename))
+ucla[ucla_coord] -= ucla[ucla_coord][0]
+ucla.time += .004
+ucla[ucla_coord] *= 1/10
+ucla[ucla_coord] -= .00
+
+# ucla.time += .004
+# ucla[ucla_coord] *= 1/10
+        
+def get_fermilab_signal(fermi_filename):
+    path = os.path.join(folder, fermi_filename)
+    signal = pd.read_csv(path, header=None)[0]
+    N = len(signal)
+    dt = 1e-7
+    c0 = 250
+    dz = .3*.032
+    window = int(dz/(c0*dt))
+    smooth = savgol_filter(signal, window, 5)
+    smooth = smooth - smooth[0]
+    time = np.arange(0, N*dt, dt)
+    return time, smooth
+
+fig, ax = plt.subplots()
+ax.plot(ucla.time, ucla[ucla_coord], label='ucla')
+time, signal = get_fermilab_signal(fermi_filename)
+ax.plot(time, signal, label='fermi')
+ax.legend()
+
+# %%

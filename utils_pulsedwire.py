@@ -65,6 +65,8 @@ def get_signal_means_and_amplitudes(time, signal, plot_signal_peaks=False, plot_
             sign*signal_derivative[scn]>0, 
             sign*signal_derivative[scn+1]<=0
         ).nonzero()[0].mean()
+        if np.isnan(zero_idx):
+            zero_idx = len(scn)/2
         zero_idxs.append(scn[int(zero_idx)])
 
     

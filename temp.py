@@ -4,22 +4,29 @@ Created on Mon Feb  6 14:31:04 2023
 
 @author: afisher
 """
-
+# %%
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 plt.close('all')
-archive_folder = 'C:\\Users\\afisher\\Documents\\FASTGREENS DATA ARCHIVE\\THESEUS 2 PulsedWire Data'
-folder = '2023-02-06 aligned without adjustment'
-folder = '2023-02-06 Final Trajectory THES 2'
-file = 'xtraj.csv'
 
 
-path = os.path.join(archive_folder, folder, file)
-df = pd.read_csv(path)
-time = df.time
-signal = df.drop(columns=['time']).mean(axis=1)
+folder = 'C:\\Users\\afish\\Documents\\Fermilab Measurements\\Theseus 2'
 
-plt.plot(time, signal)
-plt.show()
+file = 'UCLA xtraj.csv'
+dfx = pd.read_csv(os.path.join(folder, file))
+
+file = 'UCLA ytraj.csv'
+dfy = pd.read_csv(os.path.join(folder, file))
+
+time = dfx.time.values
+xtraj = dfx.drop(columns=['time']).mean(axis=1)
+ytraj = dfy.drop(columns=['time']).mean(axis=1)
+
+final_traj = pd.DataFrame(
+    data = np.vstack([time, xtraj, ytraj]).T,
+    columns=['time','xtraj','ytraj']
+)
+final_traj.to_csv(os.path.join(folder, 'UCLA final trajectory waveforms.csv'), index=False)
+# %%
