@@ -4,6 +4,7 @@ Created on Tue Jan 24 10:12:08 2023
 
 @author: afisher
 """
+# %%
 
 import pandas as pd
 import numpy as np
@@ -26,7 +27,7 @@ archive_folder = ''
 
 
 # wirescan_folder = '2023-05-31 xtraj, yoffset'
-wirescan_folder = '2023-06-01 ytraj, xoffset'
+wirescan_folder = '2023-06-01 ytraj, xoffset straightness'
 
 folder = os.path.join(archive_folder, wirescan_folder)
 
@@ -43,6 +44,9 @@ ref_signal = 0
 fig, ax = plt.subplots()
 for file in os.listdir(folder):
     if file=='calibration.csv':
+        continue
+
+    if file != '(-1000,0).csv':
         continue
     
     leftpar = file.find('(')
@@ -63,3 +67,4 @@ for file in os.listdir(folder):
     # signal = signal - signal[4000]
     ax.plot(time, signal, label=offset)
 ax.legend()
+# %%
