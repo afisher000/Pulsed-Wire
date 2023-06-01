@@ -14,7 +14,7 @@ from utils_pulsedwire import get_signal_means_and_amplitudes, low_pass_filter
 from utils_oscilloscope import Scope
 from time import sleep
 def get_measurement(scope):
-    scope.get_measurements(channel=2, shots=1, validate='manual', update_zero=True)
+    scope.get_measurements(channel=1, shots=1, validate='manual', update_zero=True, npoints=10000)
 
 # Setup figure
 plt.ion()

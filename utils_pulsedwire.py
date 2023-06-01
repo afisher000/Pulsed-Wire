@@ -39,7 +39,7 @@ def get_signal_means_and_amplitudes(time, signal, plot_signal_peaks=False, plot_
     
     # Take numerical derivative, find peaks
     signal_derivative = np.append(0, np.diff(downsampled_signal))
-    pk_idxs, _ = find_peaks(np.abs(signal_derivative), prominence = signal_derivative.max()*.5)
+    pk_idxs, _ = find_peaks(np.abs(signal_derivative), prominence = signal_derivative.max()*.3)
     
     # Handle too few or too many peaks
     if len(pk_idxs)<58:

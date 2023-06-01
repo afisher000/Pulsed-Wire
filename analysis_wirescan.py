@@ -9,12 +9,12 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from utils_pulsedwire_edited import get_signal_means_and_amplitudes, low_pass_filter
+from utils_pulsedwire import get_signal_means_and_amplitudes, low_pass_filter
 import seaborn as sns
 plt.close('all')
 # archive_folder = 'C:\\Users\\afisher\\Documents\\FASTGREENS DATA ARCHIVE\\THESEUS 1 PulsedWire Data'
-archive_folder = 'C:\\Users\\afisher\\Documents\\FASTGREENS DATA ARCHIVE\\THESEUS 2 PulsedWire Data'
-# archive_folder = ''
+# archive_folder = 'C:\\Users\\afisher\\Documents\\FASTGREENS DATA ARCHIVE\\THESEUS 2 PulsedWire Data'
+archive_folder = ''
 
 # wirescan_folder = '2022-12-19 xtraj, yoffset'
 # wirescan_folder = '2022-12-21 ytraj, xoffset'
@@ -32,7 +32,9 @@ archive_folder = 'C:\\Users\\afisher\\Documents\\FASTGREENS DATA ARCHIVE\\THESEU
 # wirescan_folder = '2023-02-03 ytraj, xoffset'
 # wirescan_folder = '2023-02-03 ytraj, xoffset (2)'
 # wirescan_folder = '2023-02-06 xtraj, yoffset'
-wirescan_folder = '2023-02-06 ytraj, xoffset'
+#wirescan_folder = '2023-02-06 ytraj, xoffset'
+
+wirescan_folder = '2023-05-31 xtraj, yoffset'
 
 folder = os.path.join(archive_folder, wirescan_folder)
 # folder = wirescan_folder
