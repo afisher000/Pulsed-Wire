@@ -27,7 +27,7 @@ archive_folder = ''
 
 
 # wirescan_folder = '2023-05-31 xtraj, yoffset'
-wirescan_folder = '2023-06-01 ytraj, xoffset straightness'
+wirescan_folder = '2023-06-01 ytraj, xoffset straightness3'
 
 folder = os.path.join(archive_folder, wirescan_folder)
 
@@ -37,7 +37,7 @@ df = pd.read_csv(os.path.join(folder, file))
 time = df.time.values
 ref_signal = df.drop(columns=['time']).mean(axis=1)
 ref_signal = ref_signal - ref_signal[4000]
-ref_signal = 0
+# ref_signal = 0
 
 
 # Loop over offsets
@@ -46,14 +46,14 @@ for file in os.listdir(folder):
     if file=='calibration.csv':
         continue
 
-    if file != '(-1000,0).csv':
-        continue
+    #if file != '(-1000,0).csv':
+    #    continue
     
     leftpar = file.find('(')
     comma = file.find(',')
     rightpar = file.find(')')
     
-    if folder.endswith('xoffset'):
+    if folder.find('xoffset')!=-1:
         offset = file[leftpar+1:comma]
     else:
         offset = file[comma+1:rightpar]
@@ -62,9 +62,9 @@ for file in os.listdir(folder):
     
     time = df.time.values
     signal = df.drop(columns=['time']).mean(axis=1)
-    signal = signal - signal[0]
-    # signal = signal - ref_signal
-    # signal = signal - signal[4000]
+    # signal = signal - signal[0]
+    signal = signal - ref_signal
+    signal = signal - signal[4000]
     ax.plot(time, signal, label=offset)
 ax.legend()
 # %%

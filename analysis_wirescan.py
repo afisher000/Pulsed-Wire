@@ -13,7 +13,7 @@ from utils_pulsedwire import get_signal_means_and_amplitudes, low_pass_filter
 import seaborn as sns
 plt.close('all')
 # archive_folder = 'C:\\Users\\afisher\\Documents\\FASTGREENS DATA ARCHIVE\\THESEUS 1 PulsedWire Data'
-# archive_folder = 'C:\\Users\\afisher\\Documents\\FASTGREENS DATA ARCHIVE\\THESEUS 2 PulsedWire Data'
+#archive_folder = 'C:\\Users\\afisher\\Documents\\FASTGREENS DATA ARCHIVE\\THESEUS 2 PulsedWire Data'
 archive_folder = ''
 
 # wirescan_folder = '2022-12-19 xtraj, yoffset'
@@ -34,10 +34,12 @@ archive_folder = ''
 # wirescan_folder = '2023-02-06 xtraj, yoffset'
 #wirescan_folder = '2023-02-06 ytraj, xoffset'
 
-wirescan_folder = '2023-05-31 xtraj, yoffset'
+# THZ EXPERIMENT
+#wirescan_folder = '2023-05-31 xtraj, yoffset'
+wirescan_folder = '2023-06-01 ytraj, xoffset'
 
 folder = os.path.join(archive_folder, wirescan_folder)
-# folder = wirescan_folder
+#folder = wirescan_folder
 
 
 folder = os.path.join(archive_folder, wirescan_folder)
@@ -115,8 +117,8 @@ def get_axis_fit(series):
     return peak, axis, rmse
     
 def get_wire_adjustments(peaks, axis, weights, dz_p1_und = 41, dz_und_p2 = 12):
-    dz_p1_und = 41 #inches
-    dz_und_p2 = 12 #inches
+    dz_p1_und = 48 #inches
+    dz_und_p2 = 10.5 #inches
     und_L = 39 #inches
     
     # Center on undulator
@@ -141,7 +143,7 @@ def get_wire_adjustments(peaks, axis, weights, dz_p1_und = 41, dz_und_p2 = 12):
 concavity_df = wirescan_df.apply(get_axis_fit).transpose()
 concavity_df.columns = ['peak','axis','rmse']
 cmap = plt.get_cmap('coolwarm')
-concavity_df.plot.scatter('peak','axis', c='rmse', cmap=cmap)
+concavity_df.plot.scatter('peak','axis', c='rmse')
 
 # Get wire adjustments
 peaks = concavity_df.peak.values

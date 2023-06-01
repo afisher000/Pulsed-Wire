@@ -15,21 +15,19 @@ from utils_oscilloscope import Scope
 import os
 
 # Folder and file
-folder = '2023-06-01 ytraj vs xoffset'
-file = '(0,0).csv'
+folder = '2023-06-01 ytraj, xoffset straightness3'
+file = '(-1000,0).csv'
 
 # 
 filename = os.path.join(folder, file)
 # Take measurements
 scope = Scope()
 # scope.get_measurements(channel=1, shots=2, validate='manual', update_zero=False)
-scope.get_measurements(channel=2, shots=20, validate='manual', update_zero=True, npoints=10000)
+scope.get_measurements(channel=1, shots=5, validate='none', update_zero=False, npoints=10000)
 # scope.get_measurements(channel=1, shots=1, npoints=10000)
 scope.save_measurements(filename)
 
 # scope.print_waveforms(channels=['x','y'], npoints=10000, filename = filename)
-
-
 
 
 
