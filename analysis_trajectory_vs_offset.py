@@ -30,6 +30,7 @@ archive_folder = ''
 wirescan_folder = '2023-06-01 ytraj, xoffset'
 # wirescan_folder = '2023-06-01 ytraj, xoffset straightness3'
 
+
 folder = os.path.join(archive_folder, wirescan_folder)
 
 # Get reference

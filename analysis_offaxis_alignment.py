@@ -66,29 +66,59 @@ def plot_traj_sum(ax, folder, dx_files, dy_files):
 archive_folder = ''
 
 offaxis_folder = '2023-06-01 offaxis'
-offaxis_folder = 'Alignments4'
+offaxis_folder = 'Alignments5'
+
+
+offaxis_folder = '2023-06-01 ytraj, xoffset'
+# offaxis_folder = '2023-06-01 xtraj, yoffset'
+# offaxis_folder = '2023-06-05 ytraj, xoffset'
+# offaxis_folder = '2023-06-05 xtraj, yoffset'
+
+
 folder = os.path.join(archive_folder, offaxis_folder)
 
 
-offsets = [-1000,1000]
+# offsets = [-500,500]
+# dx_files = [f'({dx},0).csv' for dx in offsets]
+# dy_files = [f'(0,{dy}).csv' for dy in offsets]
+
+# xfolder = os.path.join(archive_folder, offaxis_folder, 'xtraj')
+# yfolder = os.path.join(archive_folder, offaxis_folder, 'ytraj')
+
+
+# for subtract_ref in [True, False]:
+#     fig, ax = plt.subplots(nrows=2, ncols=2)
+#     plot_offaxis(ax[0,0], xfolder, dx_files, subtract_ref=subtract_ref)
+#     plot_offaxis(ax[0,1], xfolder, dy_files, subtract_ref=subtract_ref)
+#     plot_offaxis(ax[1,0], yfolder, dx_files, subtract_ref=subtract_ref)
+#     plot_offaxis(ax[1,1], yfolder, dy_files, subtract_ref=subtract_ref)
+#     ax[0,0].set_ylabel('Xtraj')
+#     ax[1,0].set_ylabel('Ytraj')
+#     ax[1,0].set_xlabel('Xoffset')
+#     ax[1,1].set_xlabel('Yoffset')
+
+# fig, ax = plt.subplots(nrows=2)
+# plot_traj_sum(ax[0], xfolder, dx_files, dy_files)
+# plot_traj_sum(ax[1], yfolder, dx_files, dy_files)
+# ax[0].set_ylabel('Summed X Traj')
+# ax[1].set_ylabel('Summed Y Traj')
+
+
+offsets = [-1500, -1000, -500, 0, 500, 1000, 1500]
 dx_files = [f'({dx},0).csv' for dx in offsets]
 dy_files = [f'(0,{dy}).csv' for dy in offsets]
 
-xfolder = os.path.join(archive_folder, offaxis_folder, 'xtraj')
-yfolder = os.path.join(archive_folder, offaxis_folder, 'ytraj')
-
+folder = os.path.join(archive_folder, offaxis_folder)
+files = dx_files
 
 for subtract_ref in [True, False]:
-    fig, ax = plt.subplots(nrows=2, ncols=2)
-    # plot_offaxis(ax[0,0], xfolder, dx_files, subtract_ref=subtract_ref)
-    # plot_offaxis(ax[0,1], xfolder, dy_files, subtract_ref=subtract_ref)
-    plot_offaxis(ax[1,0], yfolder, dx_files, subtract_ref=subtract_ref)
-    plot_offaxis(ax[1,1], yfolder, dy_files, subtract_ref=subtract_ref)
-    ax[0,0].set_ylabel('Xtraj')
-    ax[1,0].set_ylabel('Ytraj')
-    ax[1,0].set_xlabel('Xoffset')
-    ax[1,1].set_xlabel('Yoffset')
+    fig, ax = plt.subplots()
+    plot_offaxis(ax, folder, files, subtract_ref=subtract_ref)
+    ax.set_ylabel('Ytraj')
+    
 
-fig, ax = plt.subplots()
-plot_traj_sum(ax, yfolder, dx_files, dy_files)
+
+
+
+
 
