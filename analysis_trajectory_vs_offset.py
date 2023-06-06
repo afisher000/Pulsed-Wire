@@ -27,8 +27,8 @@ archive_folder = ''
 
 
 # wirescan_folder = '2023-05-31 xtraj, yoffset'
-wirescan_folder = '2023-06-01 ytraj, xoffset straightness4'
-# wirescan_folder = '2023-06-01 xtraj, xoffset straightness5'
+wirescan_folder = '2023-06-01 ytraj, xoffset'
+# wirescan_folder = '2023-06-01 ytraj, xoffset straightness3'
 
 folder = os.path.join(archive_folder, wirescan_folder)
 
@@ -64,8 +64,8 @@ for file in os.listdir(folder):
     time = df.time.values
     signal = df.drop(columns=['time']).mean(axis=1)
     signal = signal - signal[0]
-    # signal = signal - ref_signal
-    # signal = signal - signal[4000]
+    #signal = signal - ref_signal
+    #signal = signal - signal[4000]
     ax.plot(time, signal, label=offset)
 ax.legend()
 # %%
