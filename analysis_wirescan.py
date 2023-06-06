@@ -35,9 +35,9 @@ archive_folder = ''
 #wirescan_folder = '2023-02-06 ytraj, xoffset'
 
 # THZ EXPERIMENT
-#wirescan_folder = '2023-05-31 xtraj, yoffset'
+# wirescan_folder = '2023-05-31 xtraj, yoffset'
 wirescan_folder = '2023-06-01 ytraj, xoffset'
-
+# 
 folder = os.path.join(archive_folder, wirescan_folder)
 #folder = wirescan_folder
 
